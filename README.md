@@ -62,7 +62,7 @@ Con estos datos se puede calcular la conversión: de cada 100 personas que entra
 
 ## Imagen de vista previa
 
-Cuando alguien comparte el enlace por WhatsApp, Facebook o Instagram, aparece una tarjeta con título, descripción e imagen. El título y la descripción ya están listos. La imagen (`og-image.png`) se agrega cuando la página esté publicada, porque necesita la dirección definitiva del sitio.
+Cuando alguien comparte el enlace por WhatsApp, Facebook o Instagram, aparece una tarjeta con título, descripción e imagen. El título y la descripción ya están listos. La imagen es `og-image.png`, con Niko y el mensaje principal. En la carpeta `assets` está el código QR listo para imprimir.
 
 ## Privacidad
 
