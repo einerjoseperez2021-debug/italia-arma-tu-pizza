@@ -633,6 +633,29 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
   .casaList{padding-bottom:max(14px,env(safe-area-inset-bottom))}
   .card .row .btn{min-width:0}
 }
+
+/* v11 · rojo vivo en la bienvenida, WhatsApp en verde, cantidad de bebidas clara */
+:root{--vivo:#ff1e2d}
+.intro{background:radial-gradient(ellipse 70% 55% at 50% 28%,rgba(255,30,45,.32),transparent 62%),radial-gradient(ellipse at 50% 120%,rgba(255,60,60,.10),transparent 60%),#0d0b0a}
+.eyebrow{font:800 13px var(--ui);letter-spacing:.32em;color:var(--vivo);text-shadow:0 0 18px rgba(255,30,45,.55)}
+.introCard h1 em{color:var(--vivo);text-shadow:0 0 28px rgba(255,30,45,.35)}
+.nikoLine b{color:var(--vivo)}
+.nikoLine .cur{background:var(--vivo)}
+.feat .ico{color:var(--vivo)}
+.introCard .go{background:linear-gradient(180deg,#ff2b38,#e0001a);box-shadow:0 16px 40px rgba(255,30,45,.5),inset 0 1px 0 rgba(255,255,255,.3)}
+.introCard .go:hover{box-shadow:0 20px 48px rgba(255,30,45,.6),inset 0 1px 0 rgba(255,255,255,.3)}
+.introFoot{color:#ff6b74}
+.btn.main.wa{background:linear-gradient(180deg,#2bd16b,#17964a);border-color:#2bd16b;box-shadow:0 10px 26px rgba(31,170,83,.4),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn.main.wa:hover{filter:brightness(1.08)}
+.dchip{flex-direction:column;align-items:stretch;min-width:132px}
+.dadd{padding:9px 12px 6px}
+.dadd .add{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:13px;font-weight:700;color:#3ddc84}
+.dadd .add .ico{width:14px;height:14px}
+.dstep{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:4px 6px 7px}
+.dstep button{width:36px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;display:grid;place-items:center;cursor:pointer}
+.dstep button .ico{width:16px;height:16px}
+.dstep button.rm{border-color:rgba(255,77,85,.6);color:#ff6b72}
+.dstep span{min-width:26px;text-align:center;font:800 16px var(--ui)}
 </style>
 </head>
 <body>
@@ -820,7 +843,7 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
     <div class="nikoWrap"><div class="halo"></div><img id="introImg" alt="Niko, la mascota de Italia"></div>
     <div class="nikoLine"><b>Niko</b><span id="introTxt"></span><span class="cur"></span></div>
     <div class="eyebrow">ITALIA · SINCELEJO</div>
-    <h1>Arma tu pizza,<br><em>a tu manera.</em></h1>
+    <h1>¿Y si armas<br>tu pizza<br><em>a tu manera?</em></h1>
     <p>Pizza personal de 27 cm. Elige cada ingrediente, mírala salir del horno y pídela directo por WhatsApp.</p>
     <button class="btn go" id="introGo">Empezar<i data-i="arrow"></i></button>
     <div class="feats"><span class="feat"><i data-i="layers"></i>27 ingredientes</span><span class="feat"><i data-i="tag"></i>Precio en tiempo real</span><span class="feat"><i data-i="chat"></i>Pedido por WhatsApp</span></div>
@@ -1737,14 +1760,17 @@ $('#wa').addEventListener('click', () => {
 
 /* Bienvenida */
 const intro = $('#intro');
-const SALUDO = 'Ajá, soy Niko, de Sincelejo, Sucre. Armemos tu pizza.';
+const SALUDO = ['Hola, soy Niko, de Sincelejo, Sucre.', 'Armemos tu pizza.'];
 let typer;
 function showIntro() {
   intro.classList.remove('leave'); intro.classList.add('show');
   // reinicia las animaciones de entrada
   intro.querySelectorAll('.nikoWrap,.nikoLine,.eyebrow,h1,p,.go,.feats').forEach(el=>{ el.style.animation='none'; void el.offsetWidth; el.style.animation=''; });
   const out = $('#introTxt'); out.textContent = ''; clearInterval(typer);
-  let i = 0; setTimeout(()=>{ typer = setInterval(()=>{ out.textContent = SALUDO.slice(0, ++i); if (i >= SALUDO.length) clearInterval(typer); }, 30); }, 700);
+  // dos mensajes cortos: primero el saludo, luego la invitación
+  const type = (k) => { let i = 0; const s = SALUDO[k]; out.textContent = '';
+    typer = setInterval(()=>{ out.textContent = s.slice(0, ++i); if (i >= s.length) { clearInterval(typer); if (k+1 < SALUDO.length) typer = setTimeout(()=>type(k+1), 1400); } }, 32); };
+  clearTimeout(typer); setTimeout(()=>type(0), 700);
 }
 function hideIntro() {
   if (!intro.classList.contains('show') || intro.classList.contains('leave')) return;
@@ -1837,7 +1863,9 @@ function renderDrinks() {
   const list = allDrinks ? BEBIDAS : BEBIDAS.slice(0,6);
   $('#drow').classList.toggle('all', allDrinks);
   $('#drow').innerHTML = list.map(([id,n,p]) => { const q = st.drinks[id] || 0;
-    return `<div class="dchip${q?' on':''}"><button class="dadd" data-d="${id}"><span>${n}</span><b>${fmt(p)}</b></button>${q?`<button class="dmin" data-dm="${id}" aria-label="Quitar una">${I('minus')}</button><em>${q}</em>`:''}</div>`; }).join('');
+    if (!q) return `<div class="dchip"><button class="dadd" data-d="${id}"><span>${n}</span><b>${fmt(p)}</b><span class="add">${I('plus')}Agregar</span></button></div>`;
+    return `<div class="dchip on"><div class="dadd"><span>${n}</span><b>${fmt(p)} c/u</b></div>
+      <div class="dstep"><button class="${q===1?'rm':''}" data-dm="${id}" aria-label="${q===1?'Quitar bebida':'Una menos'}">${I(q===1?'trash':'minus')}</button><span>${q}</span><button data-d="${id}" aria-label="Una más">${I('plus')}</button></div></div>`; }).join('');
   $('#moreDrinks').textContent = allDrinks ? 'Ver menos' : 'Ver todas';
 }
 $('#drow').addEventListener('click', e => {
