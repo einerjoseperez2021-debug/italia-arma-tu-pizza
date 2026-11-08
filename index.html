@@ -30,7 +30,7 @@ body{font-family:Inter,system-ui,sans-serif;color:#fff;overflow-x:hidden;backgro
 body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse 60% 55% at 50% 52%,rgba(255,170,90,.10),transparent 70%),radial-gradient(ellipse at 50% 40%,#232327 0%,#141416 55%,#08080a 100%)}
 body::after{content:"";position:fixed;inset:0;z-index:-1;opacity:.07;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 button{font-family:inherit}
-.app{min-height:100vh;display:grid;grid-template-rows:auto 1fr auto auto;grid-template-columns:minmax(0,1fr);width:100%}
+.app{min-height:100vh;display:grid;grid-template-rows:auto auto 1fr auto auto;grid-template-columns:minmax(0,1fr);width:100%}
 header,main,.bar{min-width:0}
 .chips{min-width:0}
 
@@ -314,7 +314,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:18p
 @media (max-width:820px){
   :root{--pz:min(76vw,36dvh)}
   html,body{height:100%;overflow:hidden;position:fixed;inset:0;width:100%}
-  .app{height:100dvh;min-height:0;width:100vw;grid-template-rows:auto 1fr auto auto;grid-template-columns:minmax(0,1fr)}
+  .app{height:100dvh;min-height:0;width:100vw;grid-template-rows:auto auto 1fr auto auto;grid-template-columns:minmax(0,1fr)}
   header,main,.mtray,.bar{min-width:0;max-width:100vw}
   header{padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top))}
   .logo{font-size:30px}
@@ -510,6 +510,129 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
 .scene > .box3d,.scene > .card{margin-top:auto;margin-bottom:auto}
 .card{padding-top:8px}
 @media (max-height:780px){.introFoot{display:none}}
+
+/* =====================================================================
+   v10 · base automática, opciones por ingrediente, pizzas de la casa,
+   bebidas, entrega y pago, horario, pedido enviado y lectura más clara
+   ===================================================================== */
+/* Deshacer y empezar de nuevo en rojo, para que se vean */
+.btn.danger{background:rgba(227,18,27,.16);border:1px solid rgba(255,77,85,.7);color:#ffe3e4}
+.btn.danger:hover{background:rgba(227,18,27,.3);border-color:#ff4d55}
+.btn.danger .ico{color:#ff6b72}
+#mUndo,#mReset{background:linear-gradient(180deg,#ef1c24,#c40d15);border-color:#ff4d55;box-shadow:0 6px 16px rgba(227,18,27,.4)}
+#mUndo:hover,#mReset:hover{filter:brightness(1.1)}
+/* Horario */
+.closedBar{display:flex;max-height:0;overflow:hidden;padding:0 12px!important;border-bottom-width:0!important;align-items:center;justify-content:center;gap:8px;font:600 13px var(--ui);color:#ffd27a;background:rgba(255,190,60,.08);border-bottom:1px solid rgba(255,190,60,.25);padding:7px 12px;text-align:center}
+.closedBar.show{max-height:80px;padding:7px 12px!important;border-bottom-width:1px!important}
+.closedBar .dot{width:8px;height:8px;border-radius:50%;background:#ffb020;flex:none}
+.closedNote{display:none;font-size:13px;line-height:1.4;color:#ffd27a;background:rgba(255,190,60,.08);border:1px solid rgba(255,190,60,.3);border-radius:12px;padding:9px 12px;margin-bottom:10px}
+.closedNote.show{display:block}
+/* Botón de pizzas de la casa (escritorio) */
+.casaBtn{display:none;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:12px;font:600 14px var(--ui);color:#fff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2);cursor:pointer;position:relative;z-index:3;margin-top:8px;transition:.2s}
+.casaBtn:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.4)}
+.casaBtn.show{display:inline-flex}
+.casaBtn .ico{width:17px;height:17px;color:#ffb3b6}
+.casaTab{display:inline-flex!important;align-items:center;gap:6px;border-color:rgba(255,77,85,.6)!important;color:#fff!important;background:rgba(227,18,27,.14)!important}
+.casaTab .ico{width:15px;height:15px}
+/* Etiqueta favorito */
+.fav{position:absolute;top:5px;left:5px;z-index:2;font:700 10px var(--ui);font-style:normal;letter-spacing:.02em;color:#1a1200;background:#ffc94a;border-radius:6px;padding:2px 6px;box-shadow:0 2px 6px rgba(0,0,0,.4);pointer-events:none}
+.cinfo .fav{position:static;display:inline-block;margin-left:8px;vertical-align:2px;box-shadow:none}
+/* Enseñar: tocar otra vez */
+.ing.teach{animation:teach 1.3s ease 2}
+@keyframes teach{0%,100%{box-shadow:0 0 0 0 rgba(255,201,74,0)}50%{box-shadow:0 0 0 4px rgba(255,201,74,.75)}}
+.stageTools{transition:opacity .25s}.stageTools.idle{opacity:0;pointer-events:none}
+.chip[data-id]{cursor:pointer;font:inherit;color:inherit}
+.chip.sin{opacity:.8;border-style:dashed}
+/* Hoja de opciones del ingrediente */
+.isback,.modalBack{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:80;opacity:0;pointer-events:none;transition:.25s}
+.isback.show,.modalBack.show{opacity:1;pointer-events:auto}
+.isheet{position:fixed;left:50%;top:50%;z-index:81;width:min(380px,92vw);background:#17171b;border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:16px;box-shadow:0 30px 80px rgba(0,0,0,.6);transform:translate(-50%,-46%) scale(.96);opacity:0;pointer-events:none;transition:.25s cubic-bezier(.2,.8,.2,1)}
+.isheet.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+.ishead{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.isart{width:52px;height:52px;flex:none;border-radius:14px;background:rgba(255,255,255,.06);padding:6px}
+.isart svg{width:100%;height:100%}
+.isinfo{flex:1;min-width:0}.isinfo b{display:block;font:700 18px var(--ui)}.isinfo small{color:#b9b9c2;font-size:13.5px}
+.isopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{height:52px;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);color:#fff;font:600 15px var(--ui);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
+.opt small{color:#ffb3b6;font-weight:600;font-size:13px}
+.opt.on{background:#fff;color:#111;border-color:#fff}.opt.on small{color:#c40d15}
+.opt.danger{grid-column:1/-1;background:linear-gradient(180deg,#ef1c24,#c40d15);border-color:#ff4d55}
+.opt .ico{width:18px;height:18px}
+/* Modal de pizzas de la casa */
+.modal{position:fixed;left:50%;top:50%;z-index:81;width:min(560px,94vw);max-height:86vh;display:flex;flex-direction:column;background:#17171b;border:1px solid rgba(255,255,255,.12);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.6);transform:translate(-50%,-46%) scale(.97);opacity:0;pointer-events:none;transition:.25s cubic-bezier(.2,.8,.2,1)}
+.modal.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+.mhead{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:18px 18px 12px;border-bottom:1px solid var(--line)}
+.mhead h3{margin:0;font:600 26px var(--display)}
+.mhead p{margin:4px 0 0;color:#b9b9c2;font-size:14px;line-height:1.4}
+.casaList{overflow:auto;padding:8px 12px 14px;overscroll-behavior:contain}
+.casa{width:100%;display:flex;align-items:center;gap:12px;padding:11px 8px;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.07);color:#fff;text-align:left;cursor:pointer;border-radius:12px;transition:background .15s}
+.casa:hover{background:rgba(255,255,255,.05)}
+.cart3{width:58px;height:58px;flex:none;border-radius:50%;background:radial-gradient(circle,#f3cf8c 0 58%,#c98a3d 62%,#9a5821 100%);position:relative}
+.cart3 span{position:absolute;width:26px;height:26px}
+.cart3 span:nth-child(1){left:8px;top:9px}.cart3 span:nth-child(2){right:7px;top:15px}.cart3 span:nth-child(3){left:17px;bottom:6px}
+.cart3 svg{width:100%;height:100%}
+.cinfo{flex:1;min-width:0}.cinfo b{display:block;font:700 16px var(--ui)}.cinfo small{display:block;color:#b9b9c2;font-size:13.5px;line-height:1.35;margin-top:2px}
+.cpr{font:800 16px var(--ui);color:#fff;white-space:nowrap}
+/* Bebidas, entrega y pago en el resumen */
+.drinks{margin:2px 0 12px}
+.dhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.dhd b{font:700 15px var(--ui)}
+.linkBtn{background:none;border:0;color:#ff8a8f;font:600 14px var(--ui);cursor:pointer;padding:6px 2px;text-decoration:underline;text-underline-offset:3px}
+.drow{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 4px;scrollbar-width:none;overscroll-behavior-x:contain}
+.drow::-webkit-scrollbar{display:none}
+.drow.all{flex-wrap:wrap;overflow:visible}
+.dchip{position:relative;flex:none;display:flex;align-items:stretch;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.04)}
+.dchip.on{border-color:#3ddc84;background:rgba(61,220,132,.08)}
+.dadd{background:none;border:0;color:#fff;padding:8px 12px;text-align:left;cursor:pointer;font-family:var(--ui)}
+.dadd span{display:block;font-size:13.5px;font-weight:600;white-space:nowrap}
+.dadd b{display:block;font-size:13px;color:#b9b9c2;font-weight:600;margin-top:1px}
+.dmin{background:none;border:0;border-left:1px solid rgba(255,255,255,.14);color:#fff;width:34px;display:grid;place-items:center;cursor:pointer}
+.dmin .ico{width:15px;height:15px}
+.dchip em{position:absolute;top:-8px;right:-6px;min-width:22px;height:22px;border-radius:999px;background:#1faa53;color:#fff;font:800 12px var(--ui);font-style:normal;display:grid;place-items:center;box-shadow:0 0 0 2px #111;padding:0 5px}
+.seg{margin-bottom:10px}
+.slbl{display:block;font:700 12px var(--ui);letter-spacing:.12em;text-transform:uppercase;color:#a9a9b2;margin-bottom:6px}
+.segs{display:flex;gap:6px;padding:4px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
+.segs.err{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.segs button{flex:1;height:42px;border-radius:10px;border:0;background:transparent;color:#d6d6dc;font:600 14.5px var(--ui);cursor:pointer;transition:.15s}
+.segs button.on{background:#fff;color:#111}
+/* Pedido enviado */
+.sent{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse 70% 55% at 50% 30%,rgba(31,170,83,.22),transparent 62%),#0b0b0d}
+.sent.show{display:flex;animation:fade .35s}
+.sentCard{width:min(380px,92vw);text-align:center;display:flex;flex-direction:column;align-items:stretch;gap:10px}
+.sentCard img{width:96px;height:96px;border-radius:50%;margin:0 auto 6px;box-shadow:0 0 0 4px #fff,0 0 0 7px #1faa53}
+.sentCard h2{margin:0;font:600 36px var(--display)}
+.sentCard p{margin:0 0 4px;color:#cfcfd6;font-size:15.5px;line-height:1.45}
+.sentSum{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);margin-bottom:6px;font-size:15px}
+.sentSum span{color:#cfcfd6}
+.sentCard .linkBtn{color:#b9b9c2;margin-top:2px}
+/* Lectura más clara: tamaños mínimos y más contraste */
+.ing .nm{font-size:13.5px}
+.ing .pr{font-size:13px}
+.side .ing .nm{font-size:12.5px}.side .ing .pr{font-size:12px}
+.cdesc{font-size:13.5px;color:#c2c2ca}
+.ticket{font-size:14px}.ticket .note{font-size:12.5px;color:#a9a9b2}
+.privacy{font-size:12.5px;color:#a2a2ab}
+.card .hand{font-size:13px;color:#a9a9b2}
+.card .msg{font-size:13.5px}
+.total small,.bitem small{font-size:11px;color:#b0b0b8}
+.pill{font-size:13.5px;color:#e6e6ea}
+.chip{font-size:13px}
+.empty{color:#b0b0b8}
+.buddy .bubble{font-size:14px}
+@media (max-width:820px){
+  .mlist .ing .nm{font-size:12.5px}.mlist .ing .pr{font-size:12px}
+  #hint{font-size:12.5px}
+  .buddy img{width:42px;height:42px}
+  .buddy .bubble{font-size:13px;max-width:180px;margin-bottom:14px;padding:8px 11px}
+  .closedBar{font-size:12.5px;padding:6px 10px}
+  .casaBtn{display:none!important}
+  .isheet{top:auto;bottom:0;left:0;right:0;width:auto;border-radius:22px 22px 0 0;padding:18px 16px max(18px,env(safe-area-inset-bottom));transform:translateY(105%)}
+  .isheet.show{transform:none}
+  .modal{top:auto;bottom:0;left:0;right:0;width:auto;max-height:88vh;border-radius:22px 22px 0 0;transform:translateY(105%)}
+  .modal.show{transform:none}
+  .casaList{padding-bottom:max(14px,env(safe-area-inset-bottom))}
+  .card .row .btn{min-width:0}
+}
 </style>
 </head>
 <body>
@@ -552,13 +675,15 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
     </div>
   </header>
 
+  <div class="closedBar" id="closedBar"></div>
   <main>
     <section class="side" id="sideL"></section>
     <section class="stage">
       <div class="stageTools"><button class="iconBtn" id="mUndo" aria-label="Deshacer" title="Deshacer"><i data-i="undo"></i></button><button class="iconBtn" id="mReset" aria-label="Empezar de nuevo" title="Empezar de nuevo"><i data-i="reset"></i></button></div>
       <div class="bases" id="bases"></div>
       <div class="pill edit" id="editPill"><i data-i="pencil"></i><span id="editTxt">Editando</span><button id="cancelEdit">Cancelar</button></div>
-      <div class="pill" id="hint">Arrastra la base a la masa y luego tus adiciones</div>
+      <div class="pill" id="hint">Toca un ingrediente para agregarlo. Tócalo otra vez para cambiarlo o quitarlo.</div>
+      <button class="casaBtn" id="casaBtn"><i data-i="layers"></i>Empieza con una de la casa</button>
       <div class="stage3d" id="stage3d">
         <div class="tilt" id="tilt">
           <div class="spin">
@@ -597,11 +722,42 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
     <div class="chips" id="chips"></div>
     <div class="total"><small id="totLbl">ESTA PIZZA</small><b id="total">$0</b></div>
     <div class="actions">
-      <button class="btn sec desk" id="undo"><i data-i="undo"></i>Deshacer</button>
-      <button class="btn sec desk" id="reset"><i data-i="reset"></i>Empezar de nuevo</button>
+      <button class="btn danger desk" id="undo"><i data-i="undo"></i>Deshacer</button>
+      <button class="btn danger desk" id="reset"><i data-i="reset"></i>Empezar de nuevo</button>
       <button class="btn cartBtn" id="cartBtn" aria-label="Ver mi pedido"><i data-i="bag"></i><span class="n" id="cartN">0</span><small>MI PEDIDO</small><b id="cartTot">$0</b></button>
       <button class="btn main" id="bake"><i data-i="flame"></i><span id="bakeTxt">Al horno</span></button>
     </div>
+  </div>
+</div>
+
+<!-- Opciones de un ingrediente ya elegido -->
+<div class="isback" id="isback"></div>
+<div class="isheet" id="isheet" role="dialog" aria-label="Opciones del ingrediente">
+  <div class="ishead"><div class="isart" id="isArt"></div><div class="isinfo"><b id="isName"></b><small id="isPrice"></small></div><button class="x" id="isClose" aria-label="Cerrar"><i data-i="x"></i></button></div>
+  <div class="isopts">
+    <button class="opt" data-o="normal">Normal</button>
+    <button class="opt" data-o="doble">Doble <small id="isDoble"></small></button>
+    <button class="opt danger" data-o="quitar"><i data-i="trash"></i>Quitar</button>
+  </div>
+</div>
+
+<!-- Pizzas de la casa -->
+<div class="modalBack" id="casaBack"></div>
+<div class="modal" id="casaModal" role="dialog" aria-label="Pizzas de la casa">
+  <div class="mhead"><div><h3>Pizzas de la casa</h3><p>Elige una y personalízala. Agregar ingredientes suma; quitarlos no cambia el precio.</p></div><button class="x" id="casaClose" aria-label="Cerrar"><i data-i="x"></i></button></div>
+  <div class="casaList" id="casaList"></div>
+</div>
+
+<!-- Pedido enviado -->
+<div class="sent" id="sent">
+  <div class="sentCard">
+    <img id="sentImg" alt="Niko">
+    <h2>¡Pedido enviado!</h2>
+    <p id="sentP">Revisa tu WhatsApp: allá te confirmamos el valor del domicilio y el tiempo de entrega.</p>
+    <div class="sentSum" id="sentSum"></div>
+    <button class="btn main" id="newOrder"><i data-i="plus"></i>Hacer otro pedido</button>
+    <button class="btn sec" id="shareSent"><i data-i="share"></i>Compartir mi pizza</button>
+    <button class="linkBtn" id="notSent">No se envió, volver a mi pedido</button>
   </div>
 </div>
 
@@ -640,13 +796,20 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
   <div class="card" id="card">
     <h2 id="cardTitle">¡TU PIZZA <span>ESTÁ LISTA!</span></h2>
     <div class="ticket"><div class="items" id="ticketItems"></div><div class="tot"><span id="ticketLbl">TOTAL</span><span id="ticketTot">$0</span></div><div class="note">Cada pizza incluye salsa tártara. El valor del domicilio se confirma por WhatsApp.</div></div>
+    <div class="drinks">
+      <div class="dhd"><b>¿Le sumas una bebida?</b><button class="linkBtn" id="moreDrinks">Ver todas</button></div>
+      <div class="drow" id="drow"></div>
+    </div>
+    <div class="seg"><span class="slbl">Entrega</span><div class="segs" data-k="entrega"><button data-v="domicilio">Domicilio</button><button data-v="recoger">Recoger en el local</button></div></div>
+    <div class="seg"><span class="slbl">Pago</span><div class="segs" data-k="pago"><button data-v="nequi">Nequi</button><button data-v="llaves">Llaves</button><button data-v="efectivo">Efectivo</button></div></div>
+    <div class="closedNote" id="closedNote"></div>
     <input class="ph-no-capture" id="fName" placeholder="Tu nombre" autocomplete="name" enterkeyhint="next">
     <input class="ph-no-capture" id="fAddr" placeholder="Dirección y barrio" autocomplete="street-address" enterkeyhint="next">
-    <textarea class="ph-no-capture" id="fNote" placeholder="Notas (opcional): sin cebolla, pago con Nequi, etc."></textarea>
+    <textarea class="ph-no-capture" id="fNote" placeholder="Notas (opcional): sin cebolla, timbre dañado, etc."></textarea>
     <div class="msg" id="msg"></div>
     <div class="privacy"><i data-i="lock"></i><span>Tu nombre, dirección y notas solo se usan para escribir el mensaje de WhatsApp y no se guardan en ningún servidor. Para mejorar la página medimos de forma anónima cómo se usa (por ejemplo, qué ingredientes se eligen).</span></div>
     <div class="row"><a class="btn main wa ph-no-capture" id="wa" href="#" target="_blank" rel="noopener"><i data-i="chat"></i>Enviar pedido por WhatsApp</a></div>
-    <div class="row"><button class="btn sec" id="again"><i data-i="plus"></i>Agregar otra pizza</button></div>
+    <div class="row"><button class="btn sec" id="again"><i data-i="plus"></i>Agregar otra pizza</button><button class="btn sec" id="shareCard"><i data-i="share"></i>Compartir</button></div>
     <div class="hand"><i data-i="pin"></i>Plaza Cultural de Majagual · Sincelejo · WhatsApp 312 295 7109</div>
   </div>
 </div>
@@ -754,6 +917,7 @@ const ICONS = {
   max:'<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>',
   chat:'<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/>',
   layers:'<path d="m12 2 10 5-10 5L2 7l10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>',
+  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
   tag:'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/>'
 };
 const I = name => `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]||''}</svg>`;
@@ -796,6 +960,37 @@ const TOPS = {
   balsamico:{name:'Reducción de balsámico', cat:'salsa', grp:'extras', drizzle:'#3b1d12'}
 };
 const GROUPS = {carnes:['L','CARNES','Carnes'], quesos:['L','QUESOS Y GOURMET','Quesos y gourmet'], veg:['R','VEGETALES','Vegetales'], extras:['R','FRUTA Y SALSAS','Fruta y salsas']};
+/* Pizzas de la casa (carta oficial de Treinta). Precio de carta; agregar ingredientes suma, quitar no descuenta. */
+const CASA = {
+  alicia:{name:'Alicia Dorada', price:13000, tops:['jamon','pina']},
+  gitana:{name:'Gitana', price:13000, tops:['jamon']},
+  matildelina:{name:'Matildelina', price:13000, tops:['chorizo','jamon']},
+  senora:{name:'Señora', price:13000, tops:['tomate']},
+  mananitas:{name:'Mañanitas de invierno', price:14000, tops:['cebolla','pimenton','champinones','tomate']},
+  sanandresana:{name:'Sanandresana', price:17000, tops:['salami','pollo','pimenton']},
+  companera:{name:'Compañera', price:17000, tops:['pollo','champinones']},
+  simulacion:{name:'Simulación', price:17000, tops:['pollo','champinones']},
+  lasanta:{name:'La Santa', price:20000, tops:['chorizo','jamon','butifarra','pollo']},
+  obsesion:{name:'Obsesión', price:20000, tops:['ranchera','carne','cebolla','picante']},
+  caprichosa:{name:'Caprichosa', price:20000, tops:['parmesano','jamon','tocineta','pimenton','aceitunas','uvas']},
+  prosciutto:{name:'Prosciutto e Fungui', price:20000, tops:['bufala','serrano','rugula','balsamico']},
+  porcheta:{name:'Porcheta', price:20000, tops:['porchetta','rugula','parmesano','miel']},
+  peperoni:{name:'Peperoni', price:20000, tops:['pepperoni','burrata','parmesano']},
+  italiana:{name:'Italiana', price:24000, tops:['jamon','pepperoni','ranchera','tocineta','salami','maiz','pollo']}
+};
+/* Bebidas (precios de Treinta). Las 6 primeras se muestran de una vez; el resto en "Ver todas". */
+const BEBIDAS = [
+  ['gas400','Gaseosa 400 ml',4500], ['kola','Kola Román 400 ml',4500], ['hit','Jugo Hit 500 ml',4500],
+  ['agua','Agua 600 ml',3000], ['cerveza','Cerveza',4500], ['gas15','Gaseosa 1,5 L',10000],
+  ['sprite','Sprite 400 ml',4500], ['soda','Soda 400 ml',4500], ['delvalle','Jugo Del Valle',4500],
+  ['fuze','Fuze Tea personal',4500], ['pet250','Bebida 250 ml',3000], ['michtrad','Michelada tradicional',7000],
+  ['michginger','Michelada ginger-soda',10000], ['michcerv','Michelada de cerveza',12000]
+];
+const BEB = Object.fromEntries(BEBIDAS.map(([id,n,p]) => [id,{name:n, price:p}]));
+/* Etiqueta "Favorito": se puede actualizar con lo que más se vende (datos de PostHog o de la caja). */
+const FAVORITOS = { ingredientes:['jamon','pollo','pepperoni'], casa:['alicia','italiana','lasanta'] };
+const HORARIO = { abre: 17*60, cierra: 23*60+30, texto: '5:00 p. m. a 11:30 p. m.' };
+const DIRECCION_LOCAL = 'Plaza Cultural de Majagual, Sincelejo';
 const BASES = [
   {id:'sauce', name:'Salsa de tomate', cls:'bottle', svg:bottleSVG, w:56, h:122},
   {id:'cheese', name:'Mozzarella', cls:'bowl', svg:bowlSVG, w:92, h:70},
@@ -812,7 +1007,7 @@ const isMobile = () => matchMedia('(max-width:820px)').matches;
 /* ================= Estado =================
    cart: pizzas del pedido [{tops:{id:veces}, qty}]. Al hornear, la pizza entra al pedido.
    editing: posición de la pizza que se está editando (o null si es nueva). */
-const st = {sauce:false, cheese:false, oregano:false, tops:{}, baked:false, history:[], sound:true, cart:[], editing:null, last:null, tab:'base'};
+const st = {sauce:false, cheese:false, oregano:false, tops:{}, baked:false, history:[], sound:true, cart:[], editing:null, last:null, tab:'carnes', house:null, drinks:{}, entrega:'domicilio', pago:'', sentPending:false};
 const $ = s => document.querySelector(s);
 const pizza = $('#pizza'), piecesEl = $('#pieces'), tilt = $('#tilt');
 
@@ -826,7 +1021,7 @@ const dishPos = [[18,32,-20],[48,24,25],[78,34,60],[30,70,110],[62,72,-50],[88,7
 function topCard(id) {
   const t = TOPS[id], el = document.createElement('div'); el.className='ing'; el.dataset.id=id; el.dataset.grp=t.grp;
   const dish = dishPos.map(([x,y,r]) => `<div class="p" style="left:${x}%;top:${y}%;transform:translate(-50%,-50%) rotate(${r}deg)">${ART[id]()}</div>`).join('');
-  el.innerHTML = `<div class="dishWrap"><div class="dish">${dish}</div></div><div><div class="nm">${t.name}</div><div class="pr">+ ${fmt(price(id))}</div></div><div class="badge">${I('check')}</div>`;
+  el.innerHTML = `<div class="dishWrap"><div class="dish">${dish}</div></div><div><div class="nm">${t.name}</div><div class="pr">+ ${fmt(price(id))}</div></div><div class="badge">${I('check')}</div>${FAVORITOS.ingredientes.includes(id)?'<em class="fav">Favorito</em>':''}`;
   el.addEventListener('pointerdown', e => startDrag(e, el, 'top', id, ART[id](), 58));
   return el;
 }
@@ -850,10 +1045,9 @@ for (const b of BASES) {
 }
 // Celular: bandeja con pestañas
 const mlist = $('#mlist');
-BASES.forEach(b => mlist.appendChild(baseCard(b)));
 Object.keys(TOPS).forEach(id => mlist.appendChild(topCard(id)));
-const TABS = [['base','Base'], ...Object.entries(GROUPS).map(([g,v])=>[g,v[2]])];
-$('#tabs').innerHTML = TABS.map(([k,l])=>`<button class="tab" data-tab="${k}">${l}</button>`).join('');
+const TABS = Object.entries(GROUPS).map(([g,v])=>[g,v[2]]);
+$('#tabs').innerHTML = `<button class="tab casaTab" id="casaTab">${I('layers')}De la casa</button>` + TABS.map(([k,l])=>`<button class="tab" data-tab="${k}">${l}</button>`).join('');
 function setTab(k) {
   st.tab = k;
   document.querySelectorAll('.tab[data-tab]').forEach(t=>t.classList.toggle('on', t.dataset.tab===k));
@@ -861,8 +1055,7 @@ function setTab(k) {
   mlist.scrollLeft = 0;
 }
 document.querySelectorAll('.tab[data-tab]').forEach(t=>t.onclick=()=>setTab(t.dataset.tab));
-setTab('base');
-if (isMobile()) $('#hint').textContent = 'Toca los ingredientes para agregarlos a tu pizza';
+setTab('carnes');
 
 /* Paralaje 3D con el mouse (solo escritorio) */
 let dragging = false;
@@ -973,7 +1166,11 @@ function startDrag(e, el, kind, id, svg, w, h, tiltIt) {
     pizza.classList.remove('over'); dragging = false;
     if (ghost) { ghost.style.transition='opacity .25s'; ghost.style.opacity=0; setTimeout(()=>ghost.remove(), 300); }
     if (cancelled || dead) return;
-    if (!moved) { el.classList.remove('tap'); void el.offsetWidth; el.classList.add('tap'); apply(kind, id); return; }
+    if (!moved) {
+      el.classList.remove('tap'); void el.offsetWidth; el.classList.add('tap');
+      if (kind==='top' && st.tops[id]) { openIng(id); return; }
+      apply(kind, id); return;
+    }
     if (overPizza(ev.clientX, ev.clientY - (touch?60:0)) || overPizza(ev.clientX, ev.clientY)) apply(kind, id);
   };
   const up = ev => end(ev, false), cancel = ev => end(ev, true);
@@ -982,9 +1179,9 @@ function startDrag(e, el, kind, id, svg, w, h, tiltIt) {
 
 /* ================= Acciones sobre la pizza ================= */
 function apply(kind, id) {
+  if (kind!=='top' && st[kind]) { toast('La base ya va incluida en tu pizza'); return; }
   $('#hint').classList.add('hide'); vibrate(12);
   if (kind==='sauce') addSauce(); else if (kind==='cheese') addCheese(); else if (kind==='oregano') addOregano(); else addTopping(id);
-  if (isMobile() && st.tab==='base' && st.sauce && st.cheese && st.oregano) setTimeout(()=>setTab('carnes'), 500);
   refresh();
 }
 function addSauce(silent) {
@@ -1095,23 +1292,47 @@ function addDrizzle(id, t, count, quick) {   // salsas en chorrito sobre la pizz
 function bump(){ sfx.nope(); tilt.animate([{translate:'0 0'},{translate:'-6px 0'},{translate:'6px 0'},{translate:'0 0'}],{duration:260}); vibrate([10,40,10]); }
 function undo() {
   if (st.baked) return;
-  const h = st.history.pop(); if (!h) return;
-  if (h.t==='sauce'){ st.sauce=false; pizza.classList.remove('on-sauce'); }
-  else if (h.t==='cheese'){ st.cheese=false; pizza.classList.remove('on-cheese'); }
-  else if (h.t==='oregano'){ st.oregano=false; h.els.forEach(e=>e.remove()); }
-  else { st.tops[h.id]--; if(!st.tops[h.id]) delete st.tops[h.id]; h.els.forEach(e=>e.remove()); }
+  const i = st.history.map(h=>h.t==='top').lastIndexOf(true);
+  if (i < 0) { toast('No hay ingredientes para deshacer: la base va incluida'); return; }
+  const h = st.history.splice(i,1)[0];
+  st.tops[h.id]--; if(!st.tops[h.id]) delete st.tops[h.id]; fadeOut(h.els);
   sfx.undo(); refresh();
+}
+function fadeOut(els) { els.forEach(e => { try { e.animate([{opacity:1},{opacity:0}],{duration:220}).onfinish = () => e.remove(); } catch(x) { e.remove(); } }); }
+/* La base (salsa, mozzarella y finas hierbas) se pone sola: el cliente solo elige lo que le suma */
+function autoBase(withSound) {
+  if (!withSound) { addSauce(true); addCheese(true); addOregano(true); return; }
+  addSauce(); setTimeout(()=>addCheese(), 420); setTimeout(()=>{ addOregano(); refresh(); }, 840);
+}
+/* Cambiar la porción de un ingrediente ya elegido: 0 = quitar, 1 = normal, 2 = doble */
+function setCount(id, n) {
+  let c = st.tops[id] || 0;
+  if (n > c) { while (c < n) { apply('top', id); c++; } return; }
+  while (c > n) {
+    const i = st.history.map(h=>h.t==='top'&&h.id===id).lastIndexOf(true); if (i < 0) break;
+    fadeOut(st.history.splice(i,1)[0].els); c--;
+  }
+  if (c) st.tops[id] = c; else delete st.tops[id];
+  sfx.undo(); vibrate(10); refresh();
 }
 function clearPizza() {   // deja la masa vacía; no toca el pedido
   noteStep = 0;
-  Object.assign(st, {sauce:false, cheese:false, oregano:false, tops:{}, baked:false, history:[]});
+  Object.assign(st, {sauce:false, cheese:false, oregano:false, tops:{}, baked:false, history:[], house:null});
   pizza.classList.remove('on-sauce','on-cheese','baked','cut','baking');
   piecesEl.innerHTML=''; $('#oregano').innerHTML=''; $('#spots').innerHTML='';
   $('#hint').classList.remove('hide');
 }
-function newPizza() { clearPizza(); st.editing = null; if (isMobile()) setTab('base'); refresh(); }
+function newPizza(withSound) { clearPizza(); st.editing = null; autoBase(withSound); if (isMobile()) setTab('carnes'); refresh(); }
+function loadHouse(cid) {   // pizza de la casa como punto de partida
+  const c = CASA[cid]; if (!c) return;
+  const editing = st.editing; clearPizza(); st.editing = editing; st.house = cid; autoBase(false);
+  c.tops.forEach((id,k) => { if (LITE) addTopping(id, true); else setTimeout(()=>{ addTopping(id); refresh(); }, k*160); });
+  $('#hint').classList.add('hide'); sfx.select(); vibrate(15); refresh();
+  nikoSays(NIKO_DICE.casa.replace('{name}', c.name));
+  track('pizza_casa_elegida', {pizza: c.name, precio: c.price});
+}
 function loadPizza(i) {   // carga una pizza del pedido en la masa para editarla
-  clearPizza(); st.editing = i;
+  clearPizza(); st.editing = i; st.house = st.cart[i].house || null;
   addSauce(true); addCheese(true); addOregano(true);
   for (const [id,c] of Object.entries(st.cart[i].tops)) for (let k=0;k<c;k++) addTopping(id, true);
   $('#hint').classList.add('hide');
@@ -1120,18 +1341,36 @@ function loadPizza(i) {   // carga una pizza del pedido en la masa para editarla
 }
 
 /* ================= Pedido ================= */
-const linesOf = tops => Object.entries(tops).map(([id,c]) => ({name:TOPS[id].name + (c>1?' (doble)':''), price:price(id)*c}));
-const unitOf = tops => PRECIO_BASE + linesOf(tops).reduce((a,l)=>a+l.price,0);
-const itemTotal = it => unitOf(it.tops) * it.qty;
+const recipe = house => (house && CASA[house]) ? CASA[house].tops : [];
+const linesOf = (tops, house) => {   // adiciones que se cobran
+  const rec = recipe(house), out = [];
+  for (const [id,c] of Object.entries(tops)) {
+    const inc = rec.includes(id) ? 1 : 0, extra = c - inc;
+    if (extra > 0) out.push({id, name: TOPS[id].name + (inc ? ' extra' : (c>1 ? ' (doble)' : '')), price: price(id)*extra});
+  }
+  return out;
+};
+const sinOf = (tops, house) => recipe(house).filter(id => !tops[id]).map(id => TOPS[id].name);
+const baseOf = house => (house && CASA[house]) ? CASA[house].price : PRECIO_BASE;
+const unitOf = (tops, house) => baseOf(house) + linesOf(tops, house).reduce((a,l)=>a+l.price,0);
+const itemTotal = it => unitOf(it.tops, it.house) * it.qty;
 const cartCount = () => st.cart.reduce((a,it)=>a+it.qty,0);
 const cartTotal = () => st.cart.reduce((a,it)=>a+itemTotal(it),0);
-const descOf = tops => { const l = linesOf(tops); return l.length ? l.map(x=>x.name).join(', ') : 'Solo la base: tomate, mozzarella y finas hierbas'; };
+const drinksList = () => Object.entries(st.drinks).filter(([id,q])=>q>0 && BEB[id]).map(([id,q]) => ({id, q, name:BEB[id].name, price:BEB[id].price*q}));
+const drinksTotal = () => drinksList().reduce((a,d)=>a+d.price,0);
+const orderTotal = () => cartTotal() + drinksTotal();
+const descOf = (tops, house) => {
+  const l = linesOf(tops, house).map(x=>'+ '+x.name), sin = sinOf(tops, house).map(n=>'sin '+n.toLowerCase());
+  if (house) return [CASA[house].tops.filter(id=>tops[id]).map(id=>TOPS[id].name).join(', ')].concat(l, sin).filter(Boolean).join(' · ');
+  return l.length ? linesOf(tops).map(x=>x.name).join(', ') : 'Solo la base: tomate, mozzarella y finas hierbas';
+};
+const titleOf = (it, i) => `Pizza ${i+1}${it.house && CASA[it.house] ? ' · ' + CASA[it.house].name : ''}`;
 const plural = n => n===1 ? '1 pizza' : `${n} pizzas`;
 
 function itemHTML(it, i) {
   return `<div class="citem">
-    <div class="ctop"><b>Pizza ${i+1}${it.qty>1?` <span style="color:#3ddc84">×${it.qty}</span>`:''}</b><span class="cp">${fmt(itemTotal(it))}</span></div>
-    <div class="cdesc">${descOf(it.tops)} · ${fmt(unitOf(it.tops))} c/u</div>
+    <div class="ctop"><b>${titleOf(it,i)}${it.qty>1?` <span style="color:#3ddc84">×${it.qty}</span>`:''}</b><span class="cp">${fmt(itemTotal(it))}</span></div>
+    <div class="cdesc">${descOf(it.tops, it.house)} · ${fmt(unitOf(it.tops, it.house))} c/u</div>
     <div class="cact">
       <div class="qty"><button data-act="minus" data-i="${i}" aria-label="Menos">${I('minus')}</button><span>${it.qty}</span><button data-act="plus" data-i="${i}" aria-label="Más">${I('plus')}</button></div>
       <button class="lk" data-act="edit" data-i="${i}">${I('pencil')}Editar</button>
@@ -1139,12 +1378,15 @@ function itemHTML(it, i) {
     </div></div>`;
 }
 function renderOrder() {
-  const html = st.cart.length ? st.cart.map(itemHTML).join('') : '<div class="empty">Todavía no hay pizzas en tu pedido.<br>Arma una y mándala al horno.</div>';
+  const dl = drinksList();
+  const dHTML = dl.length ? `<div class="citem drinksLine"><div class="ctop"><b>Bebidas</b><span class="cp">${fmt(drinksTotal())}</span></div><div class="cdesc">${dl.map(d=>`${d.name} ×${d.q}`).join(' · ')}</div></div>` : '';
+  const html = st.cart.length ? st.cart.map(itemHTML).join('') + dHTML : '<div class="empty">Todavía no hay pizzas en tu pedido.<br>Arma una y mándala al horno.</div>';
   $('#dlist').innerHTML = html; $('#ticketItems').innerHTML = html;
   const n = cartCount();
-  $('#dCount').textContent = plural(n); $('#dTot').textContent = fmt(cartTotal());
+  $('#dCount').textContent = plural(n); $('#dTot').textContent = fmt(orderTotal());
   $('#ticketLbl').textContent = n>1 ? `TOTAL DEL PEDIDO (${plural(n)})` : 'TOTAL';
-  $('#ticketTot').textContent = fmt(cartTotal());
+  $('#ticketTot').textContent = fmt(orderTotal());
+  renderDrinks(); saveOrder();
   $('#cardTitle').innerHTML = n>1 ? '¡TU PEDIDO <span>ESTÁ LISTO!</span>' : '¡TU PIZZA <span>ESTÁ LISTA!</span>';
   $('#checkout').disabled = !n;
   updateWa();
@@ -1163,7 +1405,7 @@ function removeItem(i) {
   st.cart.splice(i,1);
   if (st.editing === i) { st.editing = null; }
   else if (st.editing !== null && st.editing > i) st.editing--;
-  sfx.undo(); toast(`Pizza quitada · ${st.cart.length ? 'Pedido: '+fmt(cartTotal()) : 'el pedido está vacío'}`);
+  sfx.undo(); toast(`Pizza quitada · ${st.cart.length ? 'Pedido: '+fmt(orderTotal()) : 'el pedido está vacío'}`);
   renderOrder(); refresh();
   if (!st.cart.length) { closeScene(); }
 }
@@ -1184,14 +1426,18 @@ $('#checkout').onclick = () => { closeDrawer(); openScene(false); };
 /* ================= Barra y pasos ================= */
 let lastTotal = null;
 function refresh() {
-  const lines = linesOf(st.tops);
-  $('#chips').innerHTML = [`<span class="chip base">Pizza base<i>${fmt(PRECIO_BASE)}</i></span>`]
-    .concat(lines.map(l=>`<span class="chip">${l.name}<i>+${fmt(l.price)}</i></span>`)).join('');
-  const t = unitOf(st.tops), tb = $('#total'); tb.textContent = fmt(t);
+  const lines = linesOf(st.tops, st.house);
+  const first = st.house ? `<span class="chip base">${CASA[st.house].name}<i>${fmt(CASA[st.house].price)}</i></span>` : `<span class="chip base">Pizza base<i>${fmt(PRECIO_BASE)}</i></span>`;
+  $('#chips').innerHTML = [first]
+    .concat(lines.map(l=>`<button class="chip" data-id="${l.id}">${l.name}<i>+${fmt(l.price)}</i></button>`))
+    .concat(sinOf(st.tops, st.house).map(n=>`<span class="chip sin">Sin ${n.toLowerCase()}</span>`)).join('');
+  const t = unitOf(st.tops, st.house), tb = $('#total'); tb.textContent = fmt(t);
+  document.querySelector('.stageTools').classList.toggle('idle', !Object.keys(st.tops).length && !st.house);
+  $('#casaBtn').classList.toggle('show', !st.baked && st.editing===null && !st.house && !Object.keys(st.tops).length);
   if (lastTotal !== null && t !== lastTotal) { tb.classList.remove('bump'); void tb.offsetWidth; tb.classList.add('bump'); }
   lastTotal = t;
   const n = cartCount();
-  $('#cartBtn').classList.toggle('show', n>0); $('#cartN').textContent = n; $('#cartTot').textContent = fmt(cartTotal());
+  $('#cartBtn').classList.toggle('show', n>0); $('#cartN').textContent = n; $('#cartTot').textContent = fmt(orderTotal());
   document.querySelectorAll('.ing[data-id]').forEach(el=>{ const c=st.tops[el.dataset.id]||0; el.classList.toggle('used',c>0); el.querySelector('.badge').innerHTML=c>1?'×2':I('check'); });
   document.querySelectorAll('[data-base]').forEach(el=>el.classList.toggle(el.classList.contains('bitem')?'active':'used', !!st[el.dataset.base]));
   const done = {1: st.sauce && st.cheese, 2: Object.keys(st.tops).length>0, 3: st.baked, 4: false};
@@ -1236,8 +1482,8 @@ function oven() {
     banner.classList.remove('show');
     // la pizza entra al pedido (o reemplaza la que se estaba editando)
     const tops = {...st.tops};
-    if (st.editing !== null && st.cart[st.editing]) { st.cart[st.editing].tops = tops; st.last = st.editing; }
-    else { st.cart.push({tops, qty:1}); st.last = st.cart.length-1; }
+    if (st.editing !== null && st.cart[st.editing]) { st.cart[st.editing].tops = tops; st.cart[st.editing].house = st.house; st.last = st.editing; }
+    else { st.cart.push({tops, qty:1, house: st.house}); st.last = st.cart.length-1; }
     st.editing = null;
     openScene(true);
   }, 4300);
@@ -1263,22 +1509,32 @@ function openScene(animated) {
     requestAnimationFrame(()=>requestAnimationFrame(()=>box.classList.remove('instant')));
   }
 }
-function closeScene(){ $('#scene').classList.remove('show'); if (st.baked) newPizza(); }
+function closeScene(){ $('#scene').classList.remove('show'); if (st.baked) newPizza(true); }
 
 /* ================= WhatsApp ================= */
+const PAGOS = {nequi:'Nequi', llaves:'Llaves', efectivo:'Efectivo'};
 function orderText() {
   const name=$('#fName').value.trim(), addr=$('#fAddr').value.trim(), note=$('#fNote').value.trim();
-  const n = cartCount();
+  const n = cartCount(), domi = st.entrega !== 'recoger';
   const out = [`¡Hola, Italia! Quiero hacer este pedido desde *Arma tu pizza* (${plural(n)}):`, ''];
   st.cart.forEach((it,i) => {
-    out.push(`*Pizza ${i+1}*${it.qty>1?` ×${it.qty}`:''} · personal 27 cm (base de tomate, mozzarella y finas hierbas): ${fmt(PRECIO_BASE)}`);
-    const ls = linesOf(it.tops);
-    out.push(ls.length ? 'Adiciones:' : 'Sin adiciones.');
-    ls.forEach(l => out.push(`• ${l.name}: ${fmt(l.price)}`));
-    out.push(it.qty>1 ? `Subtotal: ${fmt(unitOf(it.tops))} × ${it.qty} = ${fmt(itemTotal(it))}` : `Subtotal: ${fmt(itemTotal(it))}`, '');
+    const q = it.qty>1 ? ` ×${it.qty}` : '';
+    if (it.house && CASA[it.house]) out.push(`*Pizza ${i+1}*${q} · ${CASA[it.house].name} (de la casa): ${fmt(CASA[it.house].price)}`);
+    else out.push(`*Pizza ${i+1}*${q} · personal 27 cm (base de tomate, mozzarella y finas hierbas): ${fmt(PRECIO_BASE)}`);
+    const ls = linesOf(it.tops, it.house), sin = sinOf(it.tops, it.house);
+    if (ls.length) { out.push('Adiciones:'); ls.forEach(l => out.push(`• ${l.name}: ${fmt(l.price)}`)); }
+    else if (!it.house) out.push('Sin adiciones.');
+    if (sin.length) out.push(`Sin: ${sin.join(', ')}`);
+    out.push(it.qty>1 ? `Subtotal: ${fmt(unitOf(it.tops, it.house))} × ${it.qty} = ${fmt(itemTotal(it))}` : `Subtotal: ${fmt(itemTotal(it))}`, '');
   });
-  out.push(`*Total del pedido: ${fmt(cartTotal())}* (sin domicilio)`, '', `Nombre: ${name}`, `Dirección: ${addr}`);
+  const dl = drinksList();
+  if (dl.length) { out.push('*Bebidas*'); dl.forEach(d => out.push(`• ${d.name} ×${d.q}: ${fmt(d.price)}`)); out.push(''); }
+  out.push(`*Total del pedido: ${fmt(orderTotal())}*${domi ? ' (sin domicilio)' : ''}`, '');
+  out.push(domi ? 'Entrega: Domicilio' : `Entrega: Recojo en el local (${DIRECCION_LOCAL})`);
+  if (domi) out.push(`Dirección: ${addr}`);
+  out.push(`Pago: ${PAGOS[st.pago] || ''}`, `Nombre: ${name}`);
   if (note) out.push(`Notas: ${note}`);
+  if (!isOpen()) out.push('', `(Lo envío fuera del horario de atención: ${HORARIO.texto})`);
   return out.join('\n');
 }
 const waUrl = () => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(orderText())}`;
@@ -1289,22 +1545,41 @@ if (!KIOSCO) { $('#fName').value = store.get('italia_nombre'); $('#fAddr').value
   $(s).classList.remove('err'); $('#msg').textContent=''; updateWa();
   if (!KIOSCO && s!=='#fNote') store.set(s==='#fName'?'italia_nombre':'italia_dir', $(s).value);
 }));
+function faltantes() {
+  const f = [];
+  if (!$('#fName').value.trim()) f.push('nombre');
+  if (st.entrega !== 'recoger' && !$('#fAddr').value.trim()) f.push('direccion');
+  if (!st.pago) f.push('pago');
+  return f;
+}
 $('#wa').addEventListener('click', e => {
   if (!st.cart.length) { e.preventDefault(); return; }
-  const miss = ['#fName','#fAddr'].filter(s=>!$(s).value.trim());
-  if (miss.length) { e.preventDefault(); miss.forEach(s=>$(s).classList.add('err')); $('#msg').textContent='Escribe tu nombre y tu dirección para enviar el pedido.'; $(miss[0]).focus(); return; }
+  const miss = faltantes();
+  if (miss.length) {
+    e.preventDefault();
+    if (miss.includes('nombre')) $('#fName').classList.add('err');
+    if (miss.includes('direccion')) $('#fAddr').classList.add('err');
+    if (miss.includes('pago')) $('.segs[data-k="pago"]').classList.add('err');
+    const txt = {nombre:'tu nombre', direccion:'tu dirección', pago:'cómo vas a pagar'};
+    const l = miss.map(k=>txt[k]);
+    $('#msg').textContent = 'Falta ' + (l.length>1 ? l.slice(0,-1).join(', ') + ' y ' + l[l.length-1] : l[0]) + ' para enviar el pedido.';
+    if (miss[0]==='nombre') $('#fName').focus(); else if (miss[0]==='direccion') $('#fAddr').focus();
+    return;
+  }
   const a = $('#wa'); a.href = waUrl(); setTimeout(()=>{ a.href = '#'; }, 1500);
   document.querySelector('.step[data-s="4"]').classList.add('done');
   toast('Abriendo WhatsApp con tu pedido…');
+  st.sentPending = true; store.set('italia_enviado', String(Date.now()));
+  setTimeout(()=>{ if (st.sentPending && document.visibilityState==='visible') showSent(); }, 6000);
 });
 
 /* ================= Botones ================= */
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast.h); toast.h=setTimeout(()=>t.classList.remove('show'),2600); }
 $('#undo').onclick = undo; $('#mUndo').onclick = undo;
-const resetBtn = () => { if (st.baked) return; if (st.editing!==null) { loadPizza(st.editing); return; } clearPizza(); refresh(); };
+const resetBtn = () => { if (st.baked) return; if (st.editing!==null) { loadPizza(st.editing); return; } clearPizza(); autoBase(false); sfx.undo(); refresh(); toast('Pizza en blanco: la base sigue incluida'); };
 $('#reset').onclick = resetBtn; $('#mReset').onclick = resetBtn;
 $('#bake').onclick = bake;
-$('#again').onclick = () => { closeScene(); sfx.start(); toast(`Guardada · ${plural(cartCount())} en tu pedido · ${fmt(cartTotal())}`); };
+$('#again').onclick = () => { closeScene(); sfx.start(); toast(`Guardada · ${plural(cartCount())} en tu pedido · ${fmt(orderTotal())}`); };
 $('#backTop').onclick = () => closeScene();
 $('#cancelEdit').onclick = () => { newPizza(); toast('Edición cancelada: la pizza quedó como estaba'); };
 $('#sound').onclick = e => { st.sound=!st.sound; e.currentTarget.innerHTML = I(st.sound?'vol':'mute'); e.currentTarget.classList.toggle('off', !st.sound); };
@@ -1351,7 +1626,9 @@ if (document.readyState === 'complete') phLater(); else window.addEventListener(
 
 const nombres = tops => Object.entries(tops).map(([id,c]) => TOPS[id].name + (c>1 ? ' (doble)' : ''));
 const resumenPedido = () => ({
-  n_pizzas: cartCount(), n_lineas: st.cart.length, total: cartTotal(),
+  n_pizzas: cartCount(), n_lineas: st.cart.length, total: orderTotal(), total_pizzas: cartTotal(),
+  n_bebidas: drinksList().reduce((a,d)=>a+d.q,0), total_bebidas: drinksTotal(),
+  pizzas_casa: st.cart.filter(it=>it.house).map(it=>CASA[it.house].name),
   ticket_por_pizza: cartCount() ? Math.round(cartTotal()/cartCount()) : 0,
   ingredientes: st.cart.flatMap(it => Object.keys(it.tops).map(id => TOPS[id].name))
 });
@@ -1359,44 +1636,45 @@ const resumenPedido = () => ({
 /* ================= Niko ================= */
 $('#introImg').src = NIKO_IMG; $('#buddyImg').src = NIKO_IMG;
 const NIKO_DICE = {
-  pepperoni:['Pepperoni: el clásico que nunca falla. Ir a lo seguro también es estrategia.','Rojo intenso sobre queso blanco: contraste perfecto. Tu pizza ya tiene jerarquía visual.'],
-  jamon:['Jamón: suave y versátil. La base ideal para construir sabor por capas.','Un clásico que combina con casi todo. Buena decisión de producto.'],
-  pollo:['Pollo: proteína ligera. Equilibrio entre sabor y sensación de comida completa.','Con pollo, la pizza llena sin sentirse pesada. Eso es pensar en el usuario.'],
-  tocineta:['Tocineta: el toque crocante. La textura también es experiencia.','Ahumado y crocante: así se crea un antojo que se recuerda.'],
-  chorizo:['Chorizo: sabor con carácter costeño. Lo local también vende.','Intenso y con personalidad. Tu pizza ya tiene una propuesta clara.'],
-  salami:['Salami: un guiño italiano. Coherente con la marca, me gusta.','Curado y aromático: detalle de pizzería de autor.'],
-  ranchera:['Ranchera: sabor de casa. Lo familiar genera confianza.','Un ingrediente que todos reconocen: cero fricción para decidir.'],
-  carne:['Carne molida: contundente. Ideal para quien llega con hambre de verdad.','Más sustancia por porción: la pizza ya es comida completa.'],
-  butifarra:['Butifarra: identidad sabanera en una pizza italiana. Eso es diferenciación.','Pocas pizzerías se atreven con butifarra. Ventaja competitiva.'],
-  quesoextra:['Queso extra: cubre toda la pizza. Lo que se ve gratinado, se antoja.','Más queso, mejor gratinado. Satisfacción garantizada en cada porción.'],
-  parmesano:['Parmesano: sabor intenso en poca cantidad. Eficiente y elegante.','Un toque gourmet que eleva la percepción de toda la pizza.'],
-  bufala:['Mozzarella de búfala: cremosa y premium. Así sube el valor percibido.','Un ingrediente premium bien usado transforma la experiencia completa.'],
-  burrata:['Burrata: centro cremoso, efecto wow. Esto es diseño de experiencia.','La burrata es el punto focal: todo lo demás gira a su alrededor.'],
-  porchetta:['Porchetta: cerdo asado al estilo italiano. Nivel pizzería de autor.','Esto ya es una pizza de carta gourmet. Excelente criterio.'],
-  serrano:['Jamón serrano: curado y fino. Contrasta muy bien con algo dulce.','Premium sin exagerar. Así se construye una propuesta de valor.'],
-  champinones:['Champiñones: textura suave y sabor terroso. Equilibran cualquier carne.','Un vegetal que suma cuerpo sin robar protagonismo.'],
-  pimenton:['Pimentón: color y frescura. Diseño y sabor en un solo ingrediente.','El verde rompe la paleta de rojos. Tu pizza se ve más apetitosa.'],
-  cebolla:['Cebolla roja: dulzor suave y aroma. Los detalles hacen la diferencia.','Su aroma sale del horno antes que la pizza: marketing sensorial puro.'],
-  tomate:['Tomate fresco: la frescura se nota a primera vista.','Lo fresco comunica calidad sin decir una sola palabra.'],
-  aceitunas:['Aceitunas: un acento mediterráneo. Pequeño detalle, gran carácter.','Puntos oscuros que ordenan la composición. Buen ojo de diseñador.'],
-  maiz:['Maíz: dulce y familiar. Pensado para todo público.','A los niños les encanta: tu pizza ya es plan familiar.'],
-  rugula:['Rúgula: frescura con un amargor elegante. Toque de chef.','El verde fresco al final es lo que luce en las mejores fotos.'],
-  pina:['Piña caramelizada: dulce y salado. El contraste que genera conversación.','Lo que genera conversación se comparte. Buena jugada.'],
-  uvas:['Uvas pasas: dulzor inesperado. Una sorpresa se recuerda.','Un toque poco común: así se diferencia una pizza de autor.'],
-  picante:['Salsa picante: intensidad para quien busca emoción.','El picante bien dosificado hace que la gente vuelva por más.'],
-  miel:['Miel picante: dulce y picante a la vez. Una firma de sabor.','Contraste en una sola salsa. Así nace un producto memorable.'],
-  balsamico:['Reducción de balsámico: acidez fina y brillo. Acabado de restaurante.','Ese brillo final hace que la pizza se vea de revista.'],
-  doble:['Doble porción: cuando algo funciona, se potencia.','Doble. Sabes lo que quieres, y eso es claridad.'],
+  pepperoni:['¡Pepperoni! El que no falla, mi llave.','Con pepperoni no hay pierde, primo.'],
+  jamon:['Jamoncito: sencillo y sabroso.','Jamón, de los que más salen. ¡Ajá!'],
+  pollo:['Pollo: llena y no pesa. Bacano.','Con pollo vamos bien, mi llave.'],
+  tocineta:['¡Erda, tocineta! Crocantica.','Tocineta: esto se puso sabroso.'],
+  chorizo:['Chorizo: sabor de aquí, de la costa.','Con chorizo, ¡qué nota!'],
+  salami:['Salami: toque italiano. Fino.','Salami, pa\' los que saben.'],
+  ranchera:['Ranchera: sabor de casa.','¡Ajá, ranchera! Buena esa.'],
+  carne:['Carne molida: pa\' llegar con hambre.','Esa sí llena, primo.'],
+  butifarra:['¡Butifarra! Eso es sabana, mi llave.','Butifarra en pizza: cosa de sabaneros.'],
+  quesoextra:['Más queso, más felicidad.','Queso extra: ¡qué gratinado!'],
+  parmesano:['Parmesano: poquito y rinde.','Un toque fino de parmesano.'],
+  bufala:['Búfala: cremosita, nivel premium.','Esa búfala está de lujo.'],
+  burrata:['¡Burrata! Ahora sí nos pusimos finos.','Burrata en el centro: ¡qué nota!'],
+  porchetta:['Porchetta: ¡erda, nivel chef!','Cerdo al estilo italiano. Sabroso.'],
+  serrano:['Serrano: fino, fino.','Jamón serrano, pa\' darse el gusto.'],
+  champinones:['Champiñones: suavecitos.','Con champiñones queda balanceada.'],
+  pimenton:['Pimentón: color y frescura.','Ese verdecito se ve sabroso.'],
+  cebolla:['Cebolla morada: aroma de verdad.','Cebollita, buena esa.'],
+  tomate:['Tomate fresquito.','Frescura pura, mi llave.'],
+  aceitunas:['Aceitunas: toque mediterráneo.','Aceitunas, pa\' los de buen gusto.'],
+  maiz:['Maíz dulce: a los pelaos les encanta.','Maicito: plan familiar.'],
+  rugula:['Rúgula: fresquita y fina.','Esa rúgula se ve de revista.'],
+  pina:['¡Piña! Dulce y salado, sin miedo.','Con piña: polémica, pero sabrosa.'],
+  uvas:['Uvitas pasas: sorpresa dulce.','Ajá, uvas pasas. ¡Atrevido!'],
+  picante:['¡Picante! Pa\' los valientes.','Ojo que pica, primo.'],
+  miel:['Miel picante: dulce y con candela.','Esa miel picante es otro nivel.'],
+  balsamico:['Balsámico: acabado de restaurante.','Brillito fino de balsámico.'],
+  doble:['¡Doble! Así es, sin pena.','Doble porción, ¡qué nota!'],
   combos:{
-    'jamon+pina':'Jamón con piña: el dulce-salado más debatido. Polémico, pero vende.',
-    'pepperoni+burrata':'Pepperoni con burrata: picante y cremoso. Contraste de manual.',
-    'miel+picante':'Miel y salsa picante juntas: doble contraste, sabor de firma.',
-    'rugula+serrano':'Serrano con rúgula: combinación de carta italiana. Muy fino.'
+    'jamon+pina':'Jamón con piña: esa es la Alicia Dorada, ¡y sale más barata en la carta!',
+    'pepperoni+burrata':'Pepperoni con burrata: ¡erda, qué combinación!',
+    'miel+picante':'Miel y picante juntos: candela dulce.',
+    'rugula+serrano':'Serrano con rúgula: fino, como en Italia.'
   },
-  muchos:'Ya van {n} ingredientes. Consejo de diseño: con 3 o 4 bien elegidos, cada sabor se luce más.',
-  base:'Base lista: salsa de la casa, mozzarella y finas hierbas. Ahora viene la parte creativa.',
-  horno:'Al horno. En unos segundos la ves lista.',
-  inicio:{celular:'Empieza por la base: toca la salsa, el queso y las finas hierbas.', pc:'Arrastra o toca los ingredientes. Empieza por la base.'}
+  muchos:'Ya van {n}. Con 3 o 4, cada sabor se luce más.',
+  tip:'Si lo tocas otra vez, lo quitas o lo pones doble.',
+  casa:'¡La {name}! Ponle tu toque si quieres.',
+  horno:'¡Al horno! Ya casi, mi llave.',
+  inicio:{celular:'La base ya va puesta. Toca lo que le quieras agregar.', pc:'La base ya va puesta. Toca o arrastra lo que le quieras agregar.'}
 };
 const pick = a => a[Math.floor(Math.random()*a.length)];
 const nikoTurn = {};
@@ -1407,14 +1685,26 @@ function nikoLine(id) {   // alterna las frases de cada ingrediente para no repe
 }
 function nikoSays(msg) {
   const b = $('#buddy'); $('#buddyTxt').innerHTML = `<span class="who">NIKO</span>${msg}`; b.classList.add('talk');
-  clearTimeout(nikoSays.h); nikoSays.h = setTimeout(()=>b.classList.remove('talk'), Math.min(5200, 2200 + msg.length*28));
+  clearTimeout(nikoSays.h); nikoSays.h = setTimeout(()=>b.classList.remove('talk'), Math.min(3800, 1700 + msg.length*32));
 }
+/* Niko habla poco: el primer ingrediente, cada tres, la porción doble, combinaciones especiales y momentos clave */
+let nikoAdds = 0;
 function nikoFor(id, c) {
+  nikoAdds++;
   if (c > 1) return nikoLine('doble');
   const ids = Object.keys(st.tops);
-  for (const [k, msg] of Object.entries(NIKO_DICE.combos)) { const [a2,b2] = k.split('+'); if ((id===a2||id===b2) && st.tops[a2] && st.tops[b2]) return msg; }
+  for (const [k, msg] of Object.entries(NIKO_DICE.combos)) { const [a2,b2] = k.split('+'); if ((id===a2||id===b2) && st.tops[a2] && st.tops[b2] && !st.house) return msg; }
   if (ids.length === 6) return NIKO_DICE.muchos.replace('{n}', ids.length);
-  return nikoLine(id);
+  if (nikoAdds === 1 || nikoAdds % 3 === 0) return nikoLine(id);
+  return '';
+}
+function teachTap(id) {   // la primera vez enseña que tocar de nuevo abre las opciones
+  if (store.get('italia_tip')) return;
+  store.set('italia_tip', '1');
+  setTimeout(() => {
+    nikoSays(NIKO_DICE.tip);
+    document.querySelectorAll(`.ing[data-id="${id}"]`).forEach(el => { el.classList.add('teach'); setTimeout(()=>el.classList.remove('teach'), 2600); });
+  }, 2300);
 }
 const _apply = apply;
 apply = function(kind, id) {
@@ -1423,31 +1713,31 @@ apply = function(kind, id) {
   if (kind === 'top' && TOPS[id]) {
     const c = st.tops[id] || 0;
     if (c > (before[id]||0)) {
-      sfx.select(c > 1); nikoSays(nikoFor(id, c));
+      sfx.select(c > 1); const m = nikoFor(id, c); if (m) nikoSays(m); if (c === 1) teachTap(id);
       track('ingrediente_agregado', {ingrediente: TOPS[id].name, categoria: TOPS[id].cat, grupo: GROUPS[TOPS[id].grp][2], precio: price(id), porcion: c > 1 ? 'doble' : 'normal', editando: st.editing !== null});
     }
-  } else if (!baseBefore && st.sauce && st.cheese) { nikoSays(NIKO_DICE.base); track('base_completa'); }
+  }
 };
 const _bake = bake;
 bake = function() {
   if (!st.baked) {
     nikoSays(NIKO_DICE.horno); gc('pizza-horneada'); Object.keys(st.tops).forEach(id=>gc('adicion/'+id));
-    track('pizza_horneada', {ingredientes: nombres(st.tops), n_adiciones: Object.values(st.tops).reduce((a,b)=>a+b,0), precio_pizza: unitOf(st.tops), editando: st.editing !== null, base_puesta_a_mano: st.sauce && st.cheese});
+    track('pizza_horneada', {ingredientes: nombres(st.tops), n_adiciones: Object.values(st.tops).reduce((a,b)=>a+b,0), precio_pizza: unitOf(st.tops, st.house), editando: st.editing !== null, pizza_casa: st.house ? CASA[st.house].name : null});
   }
   _bake();
 };
 $('#bake').onclick = () => bake();
 $('#wa').addEventListener('click', () => {
   if (!st.cart.length) return;
-  const faltan = [['nombre','#fName'],['direccion','#fAddr']].filter(([,s])=>!$(s).value.trim()).map(([n])=>n);
+  const faltan = faltantes();
   if (faltan.length) { track('formulario_incompleto', {faltan}); return; }
   gc('pedido-enviado');
-  track('pedido_enviado', {...resumenPedido(), tiene_notas: !!$('#fNote').value.trim()});
+  track('pedido_enviado', {...resumenPedido(), tiene_notas: !!$('#fNote').value.trim(), entrega: st.entrega, pago: st.pago, fuera_de_horario: !isOpen()});
 });
 
 /* Bienvenida */
 const intro = $('#intro');
-const SALUDO = 'Hola, soy Niko. Te acompaño mientras armas tu pizza.';
+const SALUDO = 'Ajá, soy Niko, de Sincelejo, Sucre. Armemos tu pizza.';
 let typer;
 function showIntro() {
   intro.classList.remove('leave'); intro.classList.add('show');
@@ -1459,7 +1749,7 @@ function showIntro() {
 function hideIntro() {
   if (!intro.classList.contains('show') || intro.classList.contains('leave')) return;
   intro.classList.add('leave'); sfx.start(); vibrate(15); gc('inicio'); track('bienvenida_completada');
-  setTimeout(()=>{ intro.classList.remove('show','leave'); setTimeout(()=>nikoSays(isMobile() ? NIKO_DICE.inicio.celular : NIKO_DICE.inicio.pc), 400); }, 650);
+  setTimeout(()=>{ intro.classList.remove('show','leave'); if (!st.sauce && !st.baked) autoBase(true); setTimeout(()=>nikoSays(isMobile() ? NIKO_DICE.inicio.celular : NIKO_DICE.inicio.pc), 1100); }, 650);
   try { sessionStorage.setItem('italia_intro','1'); } catch(e) {}
   if (KIOSCO) { try { if (canFS && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); } catch(e){} }
 }
@@ -1478,7 +1768,7 @@ $('#fsBtn').onclick = () => {
 let seen = false; try { seen = !!sessionStorage.getItem('italia_intro'); } catch(e) {}
 if (KIOSCO) {
   const resetAll = () => {
-    closeDrawer(); closeScene(); st.cart = []; newPizza(); renderOrder();
+    closeDrawer(); closeScene(); hideSent(); st.cart = []; st.drinks = {}; st.pago = ''; st.entrega = 'domicilio'; clearPizza(); renderOrder(); paintSegs();
     ['#fName','#fAddr','#fNote'].forEach(s=>$(s).value='');
     showIntro();
   };
@@ -1496,13 +1786,220 @@ $('#cartBtn').addEventListener('click', () => track('mi_pedido_abierto', resumen
   const b = e.target.closest('[data-act]'); if (!b) return;
   const it = st.cart[+b.dataset.i]; if (!it) return;
   const evs = {plus:'cantidad_aumentada', minus:'cantidad_disminuida', edit:'pizza_editada', remove:'pizza_quitada'};
-  track(evs[b.dataset.act], {precio_pizza: unitOf(it.tops), cantidad: it.qty, ingredientes: nombres(it.tops)});
+  track(evs[b.dataset.act], {precio_pizza: unitOf(it.tops, it.house), cantidad: it.qty, ingredientes: nombres(it.tops)});
 }, true));
 $('#again').addEventListener('click', () => track('otra_pizza', resumenPedido()));
 ['#undo','#mUndo'].forEach(s => $(s).addEventListener('click', () => track('deshacer')));
 $('#cancelEdit').addEventListener('click', () => track('edicion_cancelada'));
 if (intro.classList.contains('show')) track('bienvenida_vista');
 
+/* ================= Opciones de un ingrediente ya elegido ================= */
+let ingOpen = null, ingAt = 0;
+function openIng(id) {
+  if (st.baked) return;
+  ingOpen = id; ingAt = Date.now(); const t = TOPS[id], c = st.tops[id] || 0, inRec = recipe(st.house).includes(id);
+  $('#isArt').innerHTML = ART[id]();
+  $('#isName').textContent = t.name;
+  $('#isPrice').textContent = inRec ? `Incluido en la ${CASA[st.house].name}` : `+ ${fmt(price(id))} la porción`;
+  $('#isDoble').textContent = '+' + fmt(price(id));
+  document.querySelectorAll('#isheet .opt').forEach(b => b.classList.toggle('on', (b.dataset.o==='normal'&&c===1) || (b.dataset.o==='doble'&&c===2)));
+  $('#isheet .opt.danger').lastChild.textContent = inRec ? 'Quitar (no cambia el precio)' : 'Quitar';
+  $('#isheet').classList.add('show'); $('#isback').classList.add('show'); sfx.tap && sfx.tap();
+}
+function closeIng() { $('#isheet').classList.remove('show'); $('#isback').classList.remove('show'); ingOpen = null; }
+$('#isback').onclick = () => { if (Date.now() - ingAt > 450) closeIng(); };   // evita que el mismo toque la cierre $('#isClose').onclick = closeIng;
+document.querySelectorAll('#isheet .opt').forEach(b => b.onclick = () => {
+  const id = ingOpen; if (!id) return; const o = b.dataset.o, before = st.tops[id] || 0;
+  closeIng();
+  setCount(id, o==='quitar' ? 0 : o==='doble' ? 2 : 1);
+  if (o==='quitar') toast(`${TOPS[id].name} quitado`);
+  track('ingrediente_cambiado', {ingrediente: TOPS[id].name, opcion: o, antes: before});
+});
+$('#chips').addEventListener('click', e => { const c = e.target.closest('.chip[data-id]'); if (c) openIng(c.dataset.id); });
+
+/* ================= Pizzas de la casa ================= */
+$('#casaList').innerHTML = Object.entries(CASA).map(([cid,c]) => `
+  <button class="casa" data-c="${cid}">
+    <div class="cart3">${c.tops.slice(0,3).map(id=>`<span>${ART[id]()}</span>`).join('')}</div>
+    <div class="cinfo"><b>${c.name}${FAVORITOS.casa.includes(cid)?'<em class="fav">Favorita</em>':''}</b><small>${c.tops.map(id=>TOPS[id].name).join(', ')}</small></div>
+    <span class="cpr">${fmt(c.price)}</span>
+  </button>`).join('');
+let casaAt = 0;
+function openCasa() { casaAt = Date.now(); $('#casaModal').classList.add('show'); $('#casaBack').classList.add('show'); sfx.whoosh(); track('casa_abierta'); }
+function closeCasa() { $('#casaModal').classList.remove('show'); $('#casaBack').classList.remove('show'); }
+$('#casaBtn').onclick = openCasa; $('#casaTab').onclick = openCasa;
+$('#casaClose').onclick = closeCasa; $('#casaBack').onclick = () => { if (Date.now() - casaAt > 450) closeCasa(); };
+$('#casaList').addEventListener('click', e => { const b = e.target.closest('.casa'); if (!b || st.baked) return; closeCasa(); loadHouse(b.dataset.c); });
+
+/* ================= Bebidas ================= */
+let allDrinks = false;
+function renderDrinks() {
+  const list = allDrinks ? BEBIDAS : BEBIDAS.slice(0,6);
+  $('#drow').classList.toggle('all', allDrinks);
+  $('#drow').innerHTML = list.map(([id,n,p]) => { const q = st.drinks[id] || 0;
+    return `<div class="dchip${q?' on':''}"><button class="dadd" data-d="${id}"><span>${n}</span><b>${fmt(p)}</b></button>${q?`<button class="dmin" data-dm="${id}" aria-label="Quitar una">${I('minus')}</button><em>${q}</em>`:''}</div>`; }).join('');
+  $('#moreDrinks').textContent = allDrinks ? 'Ver menos' : 'Ver todas';
+}
+$('#drow').addEventListener('click', e => {
+  const a = e.target.closest('[data-d]'), m = e.target.closest('[data-dm]');
+  if (a) { const id = a.dataset.d; st.drinks[id] = Math.min(20, (st.drinks[id]||0) + 1); tone(880,{dur:.1,g:.05}); track('bebida_agregada', {bebida: BEB[id].name, precio: BEB[id].price}); }
+  else if (m) { const id = m.dataset.dm; st.drinks[id] = Math.max(0, (st.drinks[id]||0) - 1); if (!st.drinks[id]) delete st.drinks[id]; tone(587,{dur:.1,g:.05}); }
+  else return;
+  renderOrder(); refresh();
+});
+$('#moreDrinks').onclick = () => { allDrinks = !allDrinks; renderDrinks(); };
+
+/* ================= Entrega y pago ================= */
+function paintSegs() {
+  document.querySelectorAll('.segs[data-k] button').forEach(b => b.classList.toggle('on', st[b.parentNode.dataset.k] === b.dataset.v));
+  $('#fAddr').style.display = st.entrega === 'recoger' ? 'none' : '';
+  $('#fAddr').placeholder = 'Dirección de entrega (barrio y punto de referencia)';
+}
+document.querySelectorAll('.segs[data-k]').forEach(g => g.addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]'); if (!b) return;
+  st[g.dataset.k] = b.dataset.v; g.classList.remove('err'); $('#msg').textContent = ''; tone(740,{dur:.08,g:.04});
+  if (!KIOSCO) store.set('italia_' + g.dataset.k, b.dataset.v);
+  paintSegs();
+}));
+if (!KIOSCO) { st.entrega = store.get('italia_entrega') || 'domicilio'; st.pago = store.get('italia_pago') || ''; }
+paintSegs();
+
+/* ================= Horario de atención ================= */
+const HORA_PRUEBA = new URLSearchParams(location.search).get('hora');   // ?hora=cerrado o ?hora=abierto, solo para probar
+function bogotaMin() {
+  const p = new Intl.DateTimeFormat('en-GB', {timeZone:'America/Bogota', hour:'2-digit', minute:'2-digit', hourCycle:'h23'}).formatToParts(new Date());
+  return (+p.find(x=>x.type==='hour').value)*60 + (+p.find(x=>x.type==='minute').value);
+}
+function isOpen() {
+  if (HORA_PRUEBA === 'cerrado') return false; if (HORA_PRUEBA === 'abierto') return true;
+  try { const m = bogotaMin(); return m >= HORARIO.abre && m < HORARIO.cierra; } catch(e) { return true; }
+}
+function paintHours() {
+  const open = isOpen();
+  $('#closedBar').innerHTML = open ? '' : `<span class="dot"></span>Cerrado ahora · Atendemos de ${HORARIO.texto}`;
+  $('#closedBar').classList.toggle('show', !open);
+  $('#closedNote').textContent = open ? '' : `Estamos cerrados ahora. Puedes enviar tu pedido y te respondemos al abrir (${HORARIO.texto}).`;
+  $('#closedNote').classList.toggle('show', !open);
+}
+paintHours(); setInterval(paintHours, 60000);
+
+/* ================= Pedido guardado en este celular ================= */
+function saveOrder() {
+  if (KIOSCO) return;
+  try {
+    if (!st.cart.length && !Object.keys(st.drinks).length) { localStorage.removeItem('italia_pedido'); return; }
+    localStorage.setItem('italia_pedido', JSON.stringify({cart: st.cart, drinks: st.drinks, at: Date.now()}));
+  } catch(e) {}
+}
+function restoreOrder() {
+  if (KIOSCO) return;
+  try {
+    const o = JSON.parse(localStorage.getItem('italia_pedido') || 'null'); if (!o || !Array.isArray(o.cart)) return;
+    const sent = +store.get('italia_enviado') || 0;
+    if (Date.now() - o.at > 12*3600e3 || sent > o.at) { localStorage.removeItem('italia_pedido'); return; }
+    st.cart = o.cart.filter(it => it && it.tops && Object.keys(it.tops).every(id => TOPS[id]))
+      .map(it => ({tops: it.tops, qty: Math.max(1, Math.min(20, +it.qty || 1)), house: CASA[it.house] ? it.house : null}));
+    st.drinks = Object.fromEntries(Object.entries(o.drinks || {}).filter(([id,q]) => BEB[id] && q > 0));
+    if (st.cart.length) setTimeout(()=>toast(`Tu pedido sigue aquí · ${fmt(orderTotal())}`), 900);
+  } catch(e) {}
+}
+
+/* ================= Pedido enviado ================= */
+$('#sentImg').src = NIKO_IMG;
+function showSent() {
+  if (!st.sentPending) return; st.sentPending = false;
+  const dl = drinksList();
+  $('#sentSum').innerHTML = `<b>${plural(cartCount())}${dl.length ? ' + ' + dl.reduce((a,d)=>a+d.q,0) + ' bebida' + (dl.reduce((a,d)=>a+d.q,0)>1?'s':'') : ''}</b><span>${fmt(orderTotal())}${st.entrega==='recoger' ? ' · Recoges en el local' : ' + domicilio'}</span>`;
+  $('#sentP').textContent = st.entrega==='recoger' ? 'Revisa tu WhatsApp: allá te confirmamos a qué hora puedes pasar a recogerlo.' : 'Revisa tu WhatsApp: allá te confirmamos el valor del domicilio y el tiempo de entrega.';
+  $('#toast').classList.remove('show'); $('#sent').classList.add('show'); sfx.success(); track('pantalla_pedido_enviado');
+}
+function hideSent() { $('#sent').classList.remove('show'); }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && st.sentPending) setTimeout(showSent, 350); });
+$('#newOrder').onclick = () => {
+  hideSent(); $('#scene').classList.remove('show'); st.cart = []; st.drinks = {}; st.last = null;
+  try { localStorage.removeItem('italia_pedido'); } catch(e) {}
+  $('#fNote').value = ''; newPizza(true); renderOrder(); track('nuevo_pedido_tras_envio');
+};
+$('#notSent').onclick = () => { hideSent(); store.set('italia_enviado', '0'); saveOrder(); track('pedido_no_enviado'); };
+
+/* ================= Compartir mi pizza (imagen para historias) ================= */
+function layerInner(kind, count) {
+  let s = '';
+  if (kind === 'cheese') spiral(count ? 70 : 95, 46, count*40).forEach(([x,y],i) => { s += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(3.4+(i%4)*.7).toFixed(1)}" ry="${(2.5+(i%3)*.6).toFixed(1)}" transform="rotate(${(i*47)%180} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${i%3?'#fff3cf':'#ffe7a0'}" opacity=".88"/>`; });
+  else spiral(count ? 55 : 80, 45, 17+count*40).forEach(([x,y],i) => { s += `<path d="M${(x-2.6).toFixed(1)} ${(y-.6).toFixed(1)} L${(x+2).toFixed(1)} ${(y-1.5).toFixed(1)} L${(x+2.6).toFixed(1)} ${(y+.4).toFixed(1)} L${(x-1.8).toFixed(1)} ${(y+1.3).toFixed(1)}Z" transform="rotate(${(i*61)%180} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${i%2?'#fff6dc':'#f4e3b0'}" stroke="#dcc488" stroke-width=".25"/>`; });
+  return s;
+}
+function pizzaSVG(tops) {   // vista cenital de la pizza, armada con los mismos dibujos de la app
+  const defs = (document.getElementById('gPep') || {}).closest ? document.getElementById('gPep').closest('defs').outerHTML : '';
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="1000" height="1000">${defs}
+    <defs><radialGradient id="shCrust" cx="50%" cy="50%" r="50%"><stop offset=".74" stop-color="#f6dfae"/><stop offset=".8" stop-color="#efc27a"/><stop offset=".87" stop-color="#dc9a4a"/><stop offset=".94" stop-color="#bd7531"/><stop offset="1" stop-color="#9a5821"/></radialGradient>
+    <radialGradient id="shSauce" cx="40%" cy="35%" r="65%"><stop offset="0" stop-color="#d23a24"/><stop offset="1" stop-color="#a51d12"/></radialGradient></defs>
+    <circle cx="50" cy="50" r="50" fill="url(#shCrust)"/><circle cx="50" cy="50" r="41" fill="url(#shSauce)"/>
+    <svg x="10" y="10" width="80" height="80" viewBox="0 0 100 100">${$('#cheese svg') ? $('#cheese svg').innerHTML : ''}</svg>`;
+  const order = Object.keys(tops).sort((a,b) => (TOPS[a].layer?0:1) - (TOPS[b].layer?0:1));
+  for (const id of order) for (let k = 0; k < tops[id]; k++) {
+    const t = TOPS[id];
+    if (t.layer) { s += `<svg x="10" y="10" width="80" height="80" viewBox="0 0 100 100">${layerInner(t.layer, k)}</svg>`; continue; }
+    if (t.drizzle) {
+      let d = 'M14 18', dir = 1; for (let y = 18; y <= 84; y += 8.5) { const x = dir > 0 ? 86 : 14; d += ` Q50 ${y+4.5} ${x} ${y+8.5}`; dir *= -1; }
+      s += `<g transform="rotate(${30 + k*90} 50 50) translate(13 13) scale(.74)"><path d="${d}" fill="none" stroke="${t.drizzle}" stroke-width="1.7" stroke-linecap="round"/></g>`; continue;
+    }
+    const n = k ? Math.ceil(t.n*.6) : t.n, off = TOP_IDS.indexOf(id)*53 + k*29, art = ART[id]();
+    for (let i = 0; i < n; i++) {
+      const r = 35.5*Math.sqrt((i+.5)/n), th = (i*137.508 + off)*Math.PI/180, x = 50 + r*Math.cos(th), y = 50 + r*Math.sin(th), sz = t.size;
+      s += `<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${(i*97 + off*7)%360})">${art.replace('<svg ', `<svg x="${(-sz/2).toFixed(2)}" y="${(-sz/2).toFixed(2)}" width="${sz}" height="${sz}" `)}</g>`;
+    }
+  }
+  const herbs = $('#oregano svg'); if (herbs) s += `<svg x="0" y="0" width="100" height="100" viewBox="0 0 100 100">${herbs.innerHTML}</svg>`;
+  return s + '</svg>';
+}
+function wrapText(ctx, text, maxW) {
+  const words = text.split(' '), lines = []; let line = '';
+  for (const w of words) { const tst = line ? line + ' ' + w : w; if (ctx.measureText(tst).width > maxW && line) { lines.push(line); line = w; } else line = tst; }
+  if (line) lines.push(line); return lines;
+}
+async function sharePizza(origen) {
+  const it = (Object.keys(st.tops).length || st.house) ? {tops: st.tops, house: st.house} : (st.cart[st.last ?? st.cart.length-1] || st.cart[0]);
+  if (!it) { toast('Arma una pizza primero'); return; }
+  toast('Preparando la imagen…');
+  try {
+    await (document.fonts && document.fonts.ready);
+    const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(pizzaSVG(it.tops));
+    await img.decode();
+    const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#0d0b0a'; ctx.fillRect(0,0,W,H);
+    let g = ctx.createRadialGradient(W/2, 560, 80, W/2, 560, 640); g.addColorStop(0,'rgba(227,18,27,.32)'); g.addColorStop(1,'rgba(227,18,27,0)'); ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#e3121b'; ctx.font = '110px "Kaushan Script", cursive'; ctx.fillText('Italia', W/2, 150);
+    ctx.fillStyle = '#bdbdc4'; ctx.font = '600 28px Inter, sans-serif'; ctx.fillText('ARMÉ MI PIZZA EN ITALIA SINCELEJO', W/2, 205);
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 50; ctx.shadowOffsetY = 24; ctx.drawImage(img, (W-720)/2, 245, 720, 720); ctx.restore();
+    const name = it.house && CASA[it.house] ? CASA[it.house].name : 'Mi pizza a mi manera';
+    ctx.fillStyle = '#fff'; ctx.font = '600 62px Fraunces, Georgia, serif'; ctx.fillText(name, W/2, 1060);
+    const ings = Object.keys(it.tops).map(id => TOPS[id].name + (it.tops[id] > 1 ? ' doble' : ''));
+    ctx.fillStyle = '#d6d6dc'; ctx.font = '500 32px Inter, sans-serif';
+    wrapText(ctx, ings.length ? ings.join(' · ') : 'Tomate, mozzarella y finas hierbas', 900).slice(0,2).forEach((l,i) => ctx.fillText(l, W/2, 1118 + i*44));
+    ctx.fillStyle = '#ff4d55'; ctx.font = '800 40px Inter, sans-serif'; ctx.fillText(fmt(unitOf(it.tops, it.house)), W/2, 1222);
+    ctx.fillStyle = '#9a9aa3'; ctx.font = '500 26px Inter, sans-serif'; ctx.fillText('Arma la tuya · @italiasincelejo', W/2, 1290);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    const file = new File([blob], 'mi-pizza-italia.png', {type:'image/png'});
+    const url = location.origin + location.pathname;
+    if (navigator.canShare && navigator.canShare({files:[file]})) {
+      await navigator.share({files:[file], title:'Mi pizza en Italia', text:`Armé mi pizza en Italia Sincelejo. Arma la tuya: ${url}`}).catch(()=>{});
+      track('pizza_compartida', {metodo:'compartir', origen});
+    } else {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mi-pizza-italia.png'; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+      toast('Imagen descargada: súbela a tus historias'); track('pizza_compartida', {metodo:'descarga', origen});
+    }
+  } catch(e) { toast('No se pudo crear la imagen en este equipo'); }
+}
+$('#shareCard').onclick = () => sharePizza('pedido');
+$('#shareSent').onclick = () => sharePizza('enviado');
+document.addEventListener('keydown', e => { if (e.key==='Escape') { closeIng(); closeCasa(); } });
+
+/* ================= Arranque ================= */
+restoreOrder();
+if (!intro.classList.contains('show')) autoBase(false);
 renderOrder(); refresh();
 })();
 </script>
