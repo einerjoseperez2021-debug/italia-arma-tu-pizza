@@ -530,12 +530,12 @@ main{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:18p
   <div class="card" id="card">
     <h2 id="cardTitle">¡TU PIZZA <span>ESTÁ LISTA!</span></h2>
     <div class="ticket"><div class="items" id="ticketItems"></div><div class="tot"><span id="ticketLbl">TOTAL</span><span id="ticketTot">$0</span></div><div class="note">Cada pizza incluye salsa tártara. El valor del domicilio se confirma por WhatsApp.</div></div>
-    <input id="fName" placeholder="Tu nombre" autocomplete="name" enterkeyhint="next">
-    <input id="fAddr" placeholder="Dirección y barrio" autocomplete="street-address" enterkeyhint="next">
-    <textarea id="fNote" placeholder="Notas (opcional): sin cebolla, pago con Nequi, etc."></textarea>
+    <input class="ph-no-capture" id="fName" placeholder="Tu nombre" autocomplete="name" enterkeyhint="next">
+    <input class="ph-no-capture" id="fAddr" placeholder="Dirección y barrio" autocomplete="street-address" enterkeyhint="next">
+    <textarea class="ph-no-capture" id="fNote" placeholder="Notas (opcional): sin cebolla, pago con Nequi, etc."></textarea>
     <div class="msg" id="msg"></div>
-    <div class="privacy">🔒 Tus datos solo se usan para enviar este pedido por WhatsApp. Esta página no los guarda en ningún servidor.</div>
-    <div class="row"><a class="btn main wa" id="wa" href="#" target="_blank" rel="noopener">ENVIAR PEDIDO POR WHATSAPP</a></div>
+    <div class="privacy">🔒 Tu nombre, dirección y notas solo se usan para escribir el mensaje de WhatsApp y no se guardan en ningún servidor. Para mejorar la página medimos de forma anónima cómo se usa (por ejemplo, qué ingredientes se eligen).</div>
+    <div class="row"><a class="btn main wa ph-no-capture" id="wa" href="#" target="_blank" rel="noopener">ENVIAR PEDIDO POR WHATSAPP</a></div>
     <div class="row"><button class="btn" id="again">+ Agregar otra pizza</button></div>
     <div class="hand">📍 Plaza Cultural de Majagual · Sincelejo · WhatsApp 312 295 7109</div>
   </div>
@@ -565,6 +565,9 @@ const KIOSCO = location.hash === '#kiosco';   // modo restaurante: abrir la pág
 const KIOSCO_INACTIVIDAD_SEG = 90;
 // Medición de resultados (panel privado gratuito en goatcounter.com). Escribir aquí el código de la cuenta, p. ej. 'italiasincelejo'.
 const GOATCOUNTER_CODIGO = 'italia-sincelejo';
+// Analítica avanzada (PostHog, región US). Esta clave es pública: solo permite ENVIAR datos, no leerlos.
+const POSTHOG_CLAVE = 'phc_qcMT6E48cYMLAc4YEVZVNr94UXZviqAUMZAaAicWxijd';
+const POSTHOG_HOST = 'https://us.i.posthog.com';
 
 /* ================= Gráficos ================= */
 const S = (inner, vb='-20 -20 40 40') => `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
@@ -1072,7 +1075,8 @@ function orderText() {
   if (note) out.push(`Notas: ${note}`);
   return out.join('\n');
 }
-function updateWa(){ $('#wa').href = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(orderText())}`; }
+const waUrl = () => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(orderText())}`;
+function updateWa(){ /* el enlace se arma solo en el momento del clic, para que los datos del cliente no queden en la página */ }
 const store = { get(k){ try { return localStorage.getItem(k) || ''; } catch(e){ return ''; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
 if (!KIOSCO) { $('#fName').value = store.get('italia_nombre'); $('#fAddr').value = store.get('italia_dir'); }
 ['#fName','#fAddr','#fNote'].forEach(s=>$(s).addEventListener('input', ()=>{
@@ -1083,7 +1087,7 @@ $('#wa').addEventListener('click', e => {
   if (!st.cart.length) { e.preventDefault(); return; }
   const miss = ['#fName','#fAddr'].filter(s=>!$(s).value.trim());
   if (miss.length) { e.preventDefault(); miss.forEach(s=>$(s).classList.add('err')); $('#msg').textContent='Escribe tu nombre y tu dirección para enviar el pedido.'; $(miss[0]).focus(); return; }
-  updateWa();
+  const a = $('#wa'); a.href = waUrl(); setTimeout(()=>{ a.href = '#'; }, 1500);
   document.querySelector('.step[data-s="4"]').classList.add('done');
   toast('📲 Abriendo WhatsApp con tu pedido…');
 });
@@ -1100,14 +1104,51 @@ $('#cancelEdit').onclick = () => { newPizza(); toast('Edición cancelada: la piz
 $('#sound').onclick = e => { st.sound=!st.sound; e.currentTarget.textContent = st.sound?'🔊':'🔇'; };
 document.addEventListener('keydown', e => { if (e.key==='Escape') { closeDrawer(); } });
 
-/* ================= Medición de resultados ================= */
-function track(name) {
+/* ================= Medición de resultados =================
+   GoatCounter: conteo simple. PostHog: embudo, ingredientes, ticket y grabaciones.
+   Nunca se envían nombre, dirección ni notas del cliente. */
+function gc(name) {
   try { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({path: name, title: name, event: true}); } catch(e) {}
 }
 if (GOATCOUNTER_CODIGO) {
   const s = document.createElement('script'); s.async = true; s.src = 'https://gc.zgo.at/count.js';
   s.dataset.goatcounter = `https://${GOATCOUNTER_CODIGO}.goatcounter.com/count`; document.head.appendChild(s);
 }
+const phQueue = []; let phReady = false;
+function track(ev, props) {
+  if (!POSTHOG_CLAVE) return;
+  if (phReady && window.posthog && window.posthog.capture) { try { window.posthog.capture(ev, props || {}); } catch(e) {} }
+  else phQueue.push([ev, props || {}]);
+}
+function loadPostHog() {
+  if (!POSTHOG_CLAVE || phReady || /^(localhost|127\.|file:)/.test(location.hostname || 'file:')) return;
+  // cargador oficial de PostHog (versión corta)
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister identify setPersonProperties reset get_distinct_id get_session_id startSessionRecording stopSessionRecording opt_out_capturing opt_in_capturing onFeatureFlags getFeatureFlag isFeatureEnabled".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  window.posthog.init(POSTHOG_CLAVE, {
+    api_host: POSTHOG_HOST,
+    defaults: '2026-01-30',
+    person_profiles: 'identified_only',          // visitantes anónimos: más barato y más privado
+    capture_pageleave: true,
+    session_recording: { maskAllInputs: true, blockClass: 'ph-no-capture' }
+  });
+  window.posthog.register({
+    modo: KIOSCO ? 'kiosco' : 'web',
+    pantalla: isMobile() ? 'celular' : 'computador',
+    modo_liviano: !!LITE
+  });
+  phReady = true;
+  phQueue.splice(0).forEach(([ev, p]) => { try { window.posthog.capture(ev, p); } catch(e) {} });
+}
+// se carga cuando la página ya está quieta, para no frenar la bienvenida en celulares
+const phLater = () => ('requestIdleCallback' in window) ? requestIdleCallback(loadPostHog, {timeout: 3500}) : setTimeout(loadPostHog, 1800);
+if (document.readyState === 'complete') phLater(); else window.addEventListener('load', phLater);
+
+const nombres = tops => Object.entries(tops).map(([id,c]) => TOPS[id].name + (c>1 ? ' (doble)' : ''));
+const resumenPedido = () => ({
+  n_pizzas: cartCount(), n_lineas: st.cart.length, total: cartTotal(),
+  ticket_por_pizza: cartCount() ? Math.round(cartTotal()/cartCount()) : 0,
+  ingredientes: st.cart.flatMap(it => Object.keys(it.tops).map(id => TOPS[id].name))
+});
 
 /* ================= Niko ================= */
 $('#introImg').src = NIKO_IMG; $('#buddyImg').src = NIKO_IMG;
@@ -1131,13 +1172,28 @@ apply = function(kind, id) {
   _apply(kind, id);
   if (kind === 'top' && TOPS[id]) {
     const c = st.tops[id] || 0;
-    if (c > (before[id]||0)) nikoSays(c > 1 ? pick(NIKO_DICE.doble) : pick(NIKO_DICE[TOPS[id].grp]));
-  } else if (!baseBefore && st.sauce && st.cheese) nikoSays(NIKO_DICE.base);
+    if (c > (before[id]||0)) {
+      nikoSays(c > 1 ? pick(NIKO_DICE.doble) : pick(NIKO_DICE[TOPS[id].grp]));
+      track('ingrediente_agregado', {ingrediente: TOPS[id].name, categoria: TOPS[id].cat, grupo: GROUPS[TOPS[id].grp][2], precio: price(id), porcion: c > 1 ? 'doble' : 'normal', editando: st.editing !== null});
+    }
+  } else if (!baseBefore && st.sauce && st.cheese) { nikoSays(NIKO_DICE.base); track('base_completa'); }
 };
 const _bake = bake;
-bake = function() { if (!st.baked) { nikoSays(NIKO_DICE.horno); track('pizza-horneada'); Object.keys(st.tops).forEach(id=>track('adicion/'+id)); } _bake(); };
+bake = function() {
+  if (!st.baked) {
+    nikoSays(NIKO_DICE.horno); gc('pizza-horneada'); Object.keys(st.tops).forEach(id=>gc('adicion/'+id));
+    track('pizza_horneada', {ingredientes: nombres(st.tops), n_adiciones: Object.values(st.tops).reduce((a,b)=>a+b,0), precio_pizza: unitOf(st.tops), editando: st.editing !== null, base_puesta_a_mano: st.sauce && st.cheese});
+  }
+  _bake();
+};
 $('#bake').onclick = () => bake();
-$('#wa').addEventListener('click', () => { if (st.cart.length && $('#fName').value.trim() && $('#fAddr').value.trim()) track('pedido-enviado'); });
+$('#wa').addEventListener('click', () => {
+  if (!st.cart.length) return;
+  const faltan = [['nombre','#fName'],['direccion','#fAddr']].filter(([,s])=>!$(s).value.trim()).map(([n])=>n);
+  if (faltan.length) { track('formulario_incompleto', {faltan}); return; }
+  gc('pedido-enviado');
+  track('pedido_enviado', {...resumenPedido(), tiene_notas: !!$('#fNote').value.trim()});
+});
 
 /* Bienvenida */
 const intro = $('#intro'), floaters = $('#floaters');
@@ -1157,7 +1213,7 @@ function showIntro() {
 }
 function hideIntro() {
   if (!intro.classList.contains('show') || intro.classList.contains('leave')) return;
-  intro.classList.add('leave'); pop(520,.12); vibrate(15); track('inicio');
+  intro.classList.add('leave'); pop(520,.12); vibrate(15); gc('inicio'); track('bienvenida_completada');
   setTimeout(()=>{ intro.classList.remove('show','leave'); setTimeout(()=>nikoSays(isMobile() ? '¡Toca los ingredientes y armamos tu pizza! 🍕' : '¡Arrastra o toca los ingredientes para empezar! 🍕'), 400); }, 650);
   try { sessionStorage.setItem('italia_intro','1'); } catch(e) {}
   if (KIOSCO) { try { if (canFS && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); } catch(e){} }
@@ -1186,6 +1242,21 @@ if (KIOSCO) {
   ['pointerdown','keydown','touchstart'].forEach(ev => window.addEventListener(ev, kick, {passive:true}));
   showIntro(); kick();
 } else if (!seen) showIntro();
+
+/* ---- eventos de uso del pedido ---- */
+const _openScene = openScene;
+openScene = function(animated) { _openScene(animated); track('resumen_pedido_visto', {...resumenPedido(), origen: animated ? 'horno' : 'mi_pedido'}); };
+$('#cartBtn').addEventListener('click', () => track('mi_pedido_abierto', resumenPedido()));
+['#dlist','#ticketItems'].forEach(sel => $(sel).addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const it = st.cart[+b.dataset.i]; if (!it) return;
+  const evs = {plus:'cantidad_aumentada', minus:'cantidad_disminuida', edit:'pizza_editada', remove:'pizza_quitada'};
+  track(evs[b.dataset.act], {precio_pizza: unitOf(it.tops), cantidad: it.qty, ingredientes: nombres(it.tops)});
+}, true));
+$('#again').addEventListener('click', () => track('otra_pizza', resumenPedido()));
+['#undo','#mUndo'].forEach(s => $(s).addEventListener('click', () => track('deshacer')));
+$('#cancelEdit').addEventListener('click', () => track('edicion_cancelada'));
+if (intro.classList.contains('show')) track('bienvenida_vista');
 
 renderOrder(); refresh();
 })();
