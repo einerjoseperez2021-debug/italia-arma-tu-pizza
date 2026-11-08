@@ -33,6 +33,7 @@ const WHATSAPP = '573122957109';   // número que recibe los pedidos (con el 57 
 const PRECIO_BASE = 11500;         // pizza base: tomate, mozzarella y finas hierbas
 const PRECIO_CATEGORIA = { proteina: 2000, vegetal: 1000, fruta: 1500, queso: 2000, premium: 4000, salsa: 1000 };
 const GOATCOUNTER_CODIGO = 'italia-sincelejo'; // panel: https://italia-sincelejo.goatcounter.com
+const POSTHOG_CLAVE = 'phc_...';   // clave pública del proyecto de PostHog (solo envía datos)
 const KIOSCO_INACTIVIDAD_SEG = 90; // segundos sin uso antes de reiniciar en modo kiosco
 ```
 
@@ -40,25 +41,28 @@ Los ingredientes están en la lista `TOPS`, donde a cada uno se le asigna su cat
 
 > **Nota:** los precios de las adiciones son **provisionales**. Salen del análisis de la carta actual y se van a ajustar con el estudio de costos por ingrediente (archivo de Excel del proyecto).
 
-## Medir resultados (panel privado)
+## Medir resultados
 
-La página ya trae la conexión con **GoatCounter**, un servicio gratuito de estadísticas que no usa cookies.
+La página envía datos anónimos de uso a dos servicios gratuitos:
 
-1. Crea una cuenta gratis en [goatcounter.com](https://www.goatcounter.com/). Al registrarte, eliges un código; el de Italia es `italia-sincelejo`.
-2. En `index.html`, escribe ese código en la configuración: `const GOATCOUNTER_CODIGO = 'italia-sincelejo';`
-3. Sube el archivo de nuevo a GitHub.
+- **PostHog** (análisis completo): panel **"Italia · Arma tu pizza"** en `https://us.posthog.com`, con el embudo de conversión, los ingredientes más pedidos, las ventas estimadas, el ticket promedio, los dispositivos, la hora con más pedidos y las grabaciones de sesión.
+- **GoatCounter** (conteo simple, respaldo): `https://italia-sincelejo.goatcounter.com`
 
-Tu panel privado queda en `https://italia-sincelejo.goatcounter.com` y muestra:
+Eventos que se registran en PostHog:
 
-| Dato | Qué significa |
+| Evento | Cuándo ocurre |
 |---|---|
-| Visitas | Personas que abrieron la página |
-| `inicio` | Personas que pasaron la bienvenida de Niko |
-| `pizza-horneada` | Pizzas que llegaron al horno |
-| `adicion/...` | Cuántas veces se eligió cada adición (por ejemplo, `adicion/pepperoni`) |
-| `pedido-enviado` | Pedidos que se enviaron por WhatsApp |
+| `bienvenida_vista` / `bienvenida_completada` | Se muestra y se pasa la bienvenida de Niko |
+| `base_completa` | El cliente pone salsa y queso |
+| `ingrediente_agregado` | Cada adición (nombre, categoría, precio, porción) |
+| `pizza_horneada` | La pizza se manda al horno (ingredientes y precio) |
+| `resumen_pedido_visto` | Se ve el resumen del pedido |
+| `pedido_enviado` | Se envía el pedido por WhatsApp (pizzas, total, ingredientes) |
+| `cantidad_aumentada`, `pizza_editada`, `pizza_quitada`, `otra_pizza`, `deshacer`, `formulario_incompleto` | Uso del pedido y señales de dificultad |
 
-Con estos datos se puede calcular la conversión: de cada 100 personas que entran, cuántas envían un pedido.
+**Para hacer pruebas sin dañar las estadísticas,** abre la página con `?prueba=1` al final del enlace. Esas visitas se excluyen del panel.
+
+**Privacidad:** el nombre, la dirección y las notas nunca se envían a PostHog ni a GoatCounter. Los campos del formulario y el botón de WhatsApp están bloqueados en las grabaciones, y el enlace de WhatsApp solo se arma en el momento del clic.
 
 ## Imagen de vista previa
 
