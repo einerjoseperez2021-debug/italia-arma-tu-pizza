@@ -131,7 +131,8 @@ main{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:18p
 .speck{position:absolute;width:1.1%;height:.7%;background:#3f6b22;border-radius:40%}
 .cuts{inset:0;border-radius:0!important;width:100%;height:100%;pointer-events:none;transform:translateZ(11.5px)}
 .cuts line{stroke:rgba(70,35,8,.6);stroke-width:.7;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
-.cut .cuts line{transition:stroke-dashoffset .5s ease;stroke-dashoffset:0}
+.cut .cuts line{transition:stroke-dashoffset .34s ease;stroke-dashoffset:0}
+.cut .cuts line:nth-child(2){transition-delay:.38s}.cut .cuts line:nth-child(3){transition-delay:.76s}
 .light{inset:0;transform:translateZ(12px);pointer-events:none;background:radial-gradient(circle at 32% 26%,rgba(255,250,235,.22),rgba(255,250,235,0) 46%),radial-gradient(circle at 70% 78%,rgba(0,0,0,.18),transparent 55%)}
 .ring{inset:-4%;border:3px dashed transparent;transform:translateZ(12px);transition:.25s;pointer-events:none}
 #pizza.over .ring{border-color:rgba(255,255,255,.8);transform:translateZ(12px) scale(1.03)}
@@ -669,6 +670,9 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
 .copy .ico{width:16px;height:16px}
 .payInfo p{margin:7px 2px 0;font-size:13.5px;line-height:1.4;color:#cfcfd6}
 .sentCard .payInfo{margin:0 0 6px}
+
+.orderNo{display:inline-block;margin:-2px auto 4px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);font:800 16px var(--ui);letter-spacing:.06em;color:#fff}
+.orderNo:empty{display:none}
 </style>
 </head>
 <body>
@@ -796,6 +800,7 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
   <div class="sentCard">
     <img id="sentImg" alt="Niko">
     <h2>¡Pedido enviado!</h2>
+    <div class="orderNo" id="orderNo"></div>
     <p id="sentP">Revisa tu WhatsApp: allá te confirmamos el valor del domicilio y el tiempo de entrega.</p>
     <div class="sentSum" id="sentSum"></div>
     <div class="payInfo" id="sentPay"></div>
@@ -1038,6 +1043,11 @@ const BEB = Object.fromEntries(BEBIDAS.map(([id,n,p,f]) => [id,{name:n, price:p,
 const bebOf = key => { const [id, sabor] = key.split('|'); const b = BEB[id]; if (!b || (sabor && !(b.sabores||[]).includes(sabor))) return null; return {id, sabor, name: b.name + (sabor ? ' ' + sabor : ''), price: b.price}; };
 /* Formas de pago del local */
 const LLAVE = '3017812668';
+/* Número de pedido corto para que el local no se pierda entre varios chats (sin letras que se confundan) */
+function orderId() {
+  if (!st.orderId) { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; st.orderId = Array.from({length:4}, () => A[Math.floor(Math.random()*A.length)]).join(''); saveOrder(); }
+  return st.orderId;
+}
 const PAGOS = {llave:'Transferencia por llave', efectivo:'Efectivo', datafono:'Datáfono (Bold)'};
 /* Etiqueta "Favorito": se puede actualizar con lo que más se vende (datos de PostHog o de la caja). */
 const FAVORITOS = { ingredientes:['jamon','pollo','pepperoni'], casa:['alicia','italiana','lasanta'] };
@@ -1161,10 +1171,10 @@ function hiss(o={}) {
   } catch(e) {}
 }
 const sfx = {
-  select(doble) {   // nota de la escala + quinta suave: satisfactorio y musical
-    const f = SCALE[noteStep % SCALE.length]; noteStep++;
-    tone(f, {dur:.34, g:.10}); tone(f*1.5, {t:.05, dur:.3, g:.045, type:'triangle', lp:2600}); tone(f*2, {dur:.16, g:.02});
-    if (doble) tone(f*2, {t:.11, dur:.32, g:.05});
+  select(doble) {   // "pop" suave y corto, como poner algo sobre la masa; sin melodía
+    const f = 360 + Math.random()*60; noteStep++;
+    tone(f, {dur:.09, g:.06, glide:.55, lp:1400}); hiss({dur:.05, g:.012, f:1800, q:1.5});
+    if (doble) tone(f*1.12, {t:.1, dur:.09, g:.05, glide:.55, lp:1400});
   },
   land() { tone(150+Math.random()*50, {dur:.08, g:.045, glide:.55, lp:800}); },
   sauce() { hiss({dur:.55, g:.05, f:450, sweep:2.4}); tone(196, {dur:.38, g:.035, type:'triangle', lp:600}); },
@@ -1172,8 +1182,21 @@ const sfx = {
   sprinkle() { for (let i=0;i<7;i++) hiss({t:i*.045, dur:.05, g:.02, f:4800+Math.random()*2400, q:4}); },
   drizzle() { hiss({dur:.9, g:.025, f:700, sweep:1.6, q:2}); tone(392, {dur:.5, g:.03, glide:1.2}); },
   tick() { tone(1400, {dur:.05, g:.03, type:'triangle'}); },
-  oven() { hiss({dur:1.8, g:.03, f:260, q:.5}); tone(110, {dur:1.5, g:.03, lp:380}); },
-  ding() { tone(1318.51, {dur:1.3, g:.07}); tone(1975.5, {dur:.9, g:.025}); },
+  oven() {   // fuego del horno: encendido, llama grave y chasquidos de leña
+    hiss({dur:.5, g:.05, f:500, sweep:2.2, q:.6});
+    hiss({t:.15, dur:2.5, g:.045, f:180, q:.4}); hiss({t:.2, dur:2.4, g:.02, f:420, q:.7});
+    tone(70, {t:.1, dur:2.4, g:.03, lp:200, attack:.3});
+    for (let i = 0; i < 16; i++) hiss({t:.3 + Math.random()*2.2, dur:.025 + Math.random()*.03, g:.03 + Math.random()*.04, f:2200 + Math.random()*3000, q:3});
+  },
+  cutter(t0=0) {   // cortador de pizza: rueda que pasa sobre la masa crocante
+    hiss({t:t0, dur:.3, g:.05, f:1600, sweep:.6, q:1.4});
+    for (let i = 0; i < 9; i++) hiss({t:t0 + i*.03, dur:.02, g:.03, f:3200 + Math.random()*1500, q:5});
+    tone(240, {t:t0+.26, dur:.06, g:.04, glide:.6, lp:900});
+  },
+  ding() {   // campanita de "listo": golpe metálico con armónicos
+    const f = 1568;
+    [[1,.11,1.8],[2.76,.04,1.1],[5.4,.02,.6],[1.005,.05,1.8]].forEach(([r,g,d]) => tone(f*r, {dur:d, g, attack:.002}));
+  },
   thud() { tone(120, {dur:.2, g:.11, glide:.6, lp:480}); hiss({dur:.12, g:.03, f:380}); },
   success() { [523.25,659.25,783.99,1046.5].forEach((f,i) => tone(f, {t:i*.075, dur:.4, g:.07})); },
   nope() { tone(330, {dur:.12, g:.06, type:'triangle'}); tone(262, {t:.1, dur:.18, g:.06, type:'triangle'}); },
@@ -1528,7 +1551,8 @@ function oven() {
       s.style.left=(30+Math.random()*40)+'%'; s.style.top=(15+Math.random()*30)+'%'; s.style.animationDelay=(i*.18)+'s';
       $('#stage3d').appendChild(s); setTimeout(()=>s.remove(),3400); }
     txt.textContent='Cortando en 6 porciones…';
-    pizza.classList.add('cut'); sfx.ding(); [0,1,2].forEach(i=>setTimeout(()=>sfx.tick(), 250+i*150));
+    pizza.classList.add('cut'); [0,1,2].forEach(i => sfx.cutter(i*.38));
+    setTimeout(()=>{ txt.textContent='¡Lista!'; sfx.ding(); vibrate(20); }, 1250);
   }, 2700);
   setTimeout(()=>{
     banner.classList.remove('show');
@@ -1538,7 +1562,7 @@ function oven() {
     else { st.cart.push({tops, qty:1, house: st.house}); st.last = st.cart.length-1; }
     st.editing = null;
     openScene(true);
-  }, 4300);
+  }, 4700);
 }
 function openScene(animated) {
   const scene=$('#scene'), bp=$('#boxPizza'), lid=$('#lid'), card=$('#card'), box=$('#box3d'), tart=$('#tartara');
@@ -1567,7 +1591,7 @@ function closeScene(){ $('#scene').classList.remove('show'); if (st.baked) newPi
 function orderText() {
   const name=$('#fName').value.trim(), addr=$('#fAddr').value.trim(), note=$('#fNote').value.trim();
   const n = cartCount(), domi = st.entrega !== 'recoger';
-  const out = [`¡Hola, Italia! Quiero hacer este pedido desde *Arma tu pizza* (${plural(n)}):`, ''];
+  const out = [`¡Hola, Italia! *Pedido #${orderId()}* desde Arma tu pizza (${plural(n)}):`, ''];
   st.cart.forEach((it,i) => {
     const q = it.qty>1 ? ` ×${it.qty}` : '';
     if (it.house && CASA[it.house]) out.push(`*Pizza ${i+1}*${q} · ${CASA[it.house].name} (de la casa): ${fmt(CASA[it.house].price)}`);
@@ -1783,7 +1807,7 @@ $('#wa').addEventListener('click', () => {
   const faltan = faltantes();
   if (faltan.length) { track('formulario_incompleto', {faltan}); return; }
   gc('pedido-enviado');
-  track('pedido_enviado', {...resumenPedido(), tiene_notas: !!$('#fNote').value.trim(), entrega: st.entrega, pago: st.pago, fuera_de_horario: !isOpen()});
+  track('pedido_enviado', {...resumenPedido(), tiene_notas: !!$('#fNote').value.trim(), entrega: st.entrega, pago: st.pago, fuera_de_horario: !isOpen(), pedido: st.orderId});
 });
 
 /* Bienvenida */
@@ -1822,7 +1846,7 @@ $('#fsBtn').onclick = () => {
 let seen = false; try { seen = !!sessionStorage.getItem('italia_intro'); } catch(e) {}
 if (KIOSCO) {
   const resetAll = () => {
-    closeDrawer(); closeScene(); hideSent(); st.cart = []; st.drinks = {}; st.pago = ''; st.entrega = 'domicilio'; clearPizza(); renderOrder(); paintSegs();
+    closeDrawer(); closeScene(); hideSent(); st.cart = []; st.drinks = {}; st.orderId = null; st.pago = ''; st.entrega = 'domicilio'; clearPizza(); renderOrder(); paintSegs();
     ['#fName','#fAddr','#fNote'].forEach(s=>$(s).value='');
     showIntro();
   };
@@ -1977,7 +2001,7 @@ function saveOrder() {
   if (KIOSCO) return;
   try {
     if (!st.cart.length && !Object.keys(st.drinks).length) { localStorage.removeItem('italia_pedido'); return; }
-    localStorage.setItem('italia_pedido', JSON.stringify({cart: st.cart, drinks: st.drinks, at: Date.now()}));
+    localStorage.setItem('italia_pedido', JSON.stringify({cart: st.cart, drinks: st.drinks, id: st.orderId || null, at: Date.now()}));
   } catch(e) {}
 }
 function restoreOrder() {
@@ -1989,6 +2013,7 @@ function restoreOrder() {
     st.cart = o.cart.filter(it => it && it.tops && Object.keys(it.tops).every(id => TOPS[id]))
       .map(it => ({tops: it.tops, qty: Math.max(1, Math.min(20, +it.qty || 1)), house: CASA[it.house] ? it.house : null}));
     st.drinks = Object.fromEntries(Object.entries(o.drinks || {}).filter(([k,q]) => bebOf(k) && q > 0));
+    if (typeof o.id === 'string' && /^[A-Z0-9]{4}$/.test(o.id)) st.orderId = o.id;
     if (st.cart.length) setTimeout(()=>toast(`Tu pedido sigue aquí · ${fmt(orderTotal())}`), 900);
   } catch(e) {}
 }
@@ -2000,13 +2025,14 @@ function showSent() {
   const dl = drinksList();
   $('#sentSum').innerHTML = `<b>${plural(cartCount())}${dl.length ? ' + ' + dl.reduce((a,d)=>a+d.q,0) + ' bebida' + (dl.reduce((a,d)=>a+d.q,0)>1?'s':'') : ''}</b><span>${fmt(orderTotal())}${st.entrega==='recoger' ? ' · Recoges en el local' : ' + domicilio'}</span>`;
   $('#sentP').textContent = st.entrega==='recoger' ? 'Revisa tu WhatsApp: allá te confirmamos a qué hora puedes pasar a recogerlo.' : 'Revisa tu WhatsApp: allá te confirmamos el valor del domicilio y el tiempo de entrega.';
+  $('#orderNo').textContent = st.orderId ? `Pedido #${st.orderId}` : '';
   $('#sentPay').innerHTML = st.pago === 'llave' ? payHTML() : '';
   $('#toast').classList.remove('show'); $('#sent').classList.add('show'); sfx.success(); track('pantalla_pedido_enviado');
 }
 function hideSent() { $('#sent').classList.remove('show'); }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && st.sentPending) setTimeout(showSent, 350); });
 $('#newOrder').onclick = () => {
-  hideSent(); $('#scene').classList.remove('show'); st.cart = []; st.drinks = {}; st.last = null;
+  hideSent(); $('#scene').classList.remove('show'); st.cart = []; st.drinks = {}; st.last = null; st.orderId = null;
   try { localStorage.removeItem('italia_pedido'); } catch(e) {}
   $('#fNote').value = ''; newPizza(true); renderOrder(); track('nuevo_pedido_tras_envio');
 };
