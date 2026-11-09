@@ -656,6 +656,19 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
 .dstep button .ico{width:16px;height:16px}
 .dstep button.rm{border-color:rgba(255,77,85,.6);color:#ff6b72}
 .dstep span{min-width:26px;text-align:center;font:800 16px var(--ui)}
+
+/* v12 · sabores de bebidas y pago por llave */
+#fopts{grid-template-columns:1fr 1fr}
+#fopts .opt:last-child:nth-child(odd){grid-column:1/-1}
+.payInfo:empty{display:none}
+.payInfo{margin-top:8px;text-align:left}
+.llave{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(61,220,132,.08);border:1px solid rgba(61,220,132,.45)}
+.llave small{display:block;font-size:12.5px;color:#b9b9c2}
+.llave b{font:800 20px var(--ui);letter-spacing:.04em;color:#fff}
+.copy{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:700 14px var(--ui);cursor:pointer}
+.copy .ico{width:16px;height:16px}
+.payInfo p{margin:7px 2px 0;font-size:13.5px;line-height:1.4;color:#cfcfd6}
+.sentCard .payInfo{margin:0 0 6px}
 </style>
 </head>
 <body>
@@ -764,6 +777,13 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
   </div>
 </div>
 
+<!-- Sabor de la bebida -->
+<div class="isback" id="fback"></div>
+<div class="isheet" id="fsheet" role="dialog" aria-label="Elige el sabor">
+  <div class="ishead"><div class="isinfo"><b id="fName2"></b><small>Elige el sabor</small></div><button class="x" id="fClose" aria-label="Cerrar"><i data-i="x"></i></button></div>
+  <div class="isopts" id="fopts"></div>
+</div>
+
 <!-- Pizzas de la casa -->
 <div class="modalBack" id="casaBack"></div>
 <div class="modal" id="casaModal" role="dialog" aria-label="Pizzas de la casa">
@@ -778,6 +798,7 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
     <h2>¡Pedido enviado!</h2>
     <p id="sentP">Revisa tu WhatsApp: allá te confirmamos el valor del domicilio y el tiempo de entrega.</p>
     <div class="sentSum" id="sentSum"></div>
+    <div class="payInfo" id="sentPay"></div>
     <button class="btn main" id="newOrder"><i data-i="plus"></i>Hacer otro pedido</button>
     <button class="btn sec" id="shareSent"><i data-i="share"></i>Compartir mi pizza</button>
     <button class="linkBtn" id="notSent">No se envió, volver a mi pedido</button>
@@ -824,7 +845,8 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased}
       <div class="drow" id="drow"></div>
     </div>
     <div class="seg"><span class="slbl">Entrega</span><div class="segs" data-k="entrega"><button data-v="domicilio">Domicilio</button><button data-v="recoger">Recoger en el local</button></div></div>
-    <div class="seg"><span class="slbl">Método de pago</span><div class="segs" data-k="pago"><button data-v="nequi">Nequi</button><button data-v="llaves">Llaves</button><button data-v="efectivo">Efectivo</button></div></div>
+    <div class="seg"><span class="slbl">Método de pago</span><div class="segs" data-k="pago"><button data-v="llave">Llave</button><button data-v="efectivo">Efectivo</button><button data-v="datafono">Datáfono</button></div>
+      <div class="payInfo" id="payInfo"></div></div>
     <div class="closedNote" id="closedNote"></div>
     <input class="ph-no-capture" id="fName" placeholder="Tu nombre" autocomplete="name" enterkeyhint="next">
     <input class="ph-no-capture" id="fAddr" placeholder="Dirección y barrio" autocomplete="street-address" enterkeyhint="next">
@@ -940,6 +962,7 @@ const ICONS = {
   max:'<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>',
   chat:'<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/>',
   layers:'<path d="m12 2 10 5-10 5L2 7l10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>',
+  copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
   share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
   tag:'<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/>'
 };
@@ -1003,13 +1026,19 @@ const CASA = {
 };
 /* Bebidas (precios de Treinta). Las 6 primeras se muestran de una vez; el resto en "Ver todas". */
 const BEBIDAS = [
-  ['gas400','Gaseosa 400 ml',4500], ['kola','Kola Román 400 ml',4500], ['hit','Jugo Hit 500 ml',4500],
-  ['agua','Agua 600 ml',3000], ['cerveza','Cerveza',4500], ['gas15','Gaseosa 1,5 L',10000],
-  ['sprite','Sprite 400 ml',4500], ['soda','Soda 400 ml',4500], ['delvalle','Jugo Del Valle',4500],
-  ['fuze','Fuze Tea personal',4500], ['pet250','Bebida 250 ml',3000], ['michtrad','Michelada tradicional',7000],
-  ['michginger','Michelada ginger-soda',10000], ['michcerv','Michelada de cerveza',12000]
+  ['gas400','Gaseosa 400 ml',4500,['Coca-Cola','Cuatro','Kola Román']],
+  ['hit','Jugo Hit 500 ml',4500,['Naranja piña','Mango','Tropical','Mora']],
+  ['agua','Agua 600 ml',3000], ['cerveza','Cerveza',4500],
+  ['gas15','Gaseosa 1,5 L',10000,['Coca-Cola','Cuatro','Kola Román']],
+  ['soda','Soda 400 ml',4500],
+  ['michtrad','Michelada tradicional',7000], ['michginger','Michelada ginger-soda',10000], ['michcerv','Michelada de cerveza',12000]
 ];
-const BEB = Object.fromEntries(BEBIDAS.map(([id,n,p]) => [id,{name:n, price:p}]));
+const BEB = Object.fromEntries(BEBIDAS.map(([id,n,p,f]) => [id,{name:n, price:p, sabores:f||null}]));
+/* Cada bebida del pedido se guarda como "id" o "id|sabor" (ej. "gas400|Coca-Cola") */
+const bebOf = key => { const [id, sabor] = key.split('|'); const b = BEB[id]; if (!b || (sabor && !(b.sabores||[]).includes(sabor))) return null; return {id, sabor, name: b.name + (sabor ? ' ' + sabor : ''), price: b.price}; };
+/* Formas de pago del local */
+const LLAVE = '3017812668';
+const PAGOS = {llave:'Transferencia por llave', efectivo:'Efectivo', datafono:'Datáfono (Bold)'};
 /* Etiqueta "Favorito": se puede actualizar con lo que más se vende (datos de PostHog o de la caja). */
 const FAVORITOS = { ingredientes:['jamon','pollo','pepperoni'], casa:['alicia','italiana','lasanta'] };
 const HORARIO = { abre: 17*60, cierra: 23*60+30, texto: '5:00 p. m. a 11:30 p. m.' };
@@ -1379,7 +1408,7 @@ const unitOf = (tops, house) => baseOf(house) + linesOf(tops, house).reduce((a,l
 const itemTotal = it => unitOf(it.tops, it.house) * it.qty;
 const cartCount = () => st.cart.reduce((a,it)=>a+it.qty,0);
 const cartTotal = () => st.cart.reduce((a,it)=>a+itemTotal(it),0);
-const drinksList = () => Object.entries(st.drinks).filter(([id,q])=>q>0 && BEB[id]).map(([id,q]) => ({id, q, name:BEB[id].name, price:BEB[id].price*q}));
+const drinksList = () => Object.entries(st.drinks).filter(([k,q])=>q>0 && bebOf(k)).map(([k,q]) => { const b = bebOf(k); return {id:k, q, name:b.name, price:b.price*q}; });
 const drinksTotal = () => drinksList().reduce((a,d)=>a+d.price,0);
 const orderTotal = () => cartTotal() + drinksTotal();
 const descOf = (tops, house) => {
@@ -1535,7 +1564,6 @@ function openScene(animated) {
 function closeScene(){ $('#scene').classList.remove('show'); if (st.baked) newPizza(true); }
 
 /* ================= WhatsApp ================= */
-const PAGOS = {nequi:'Nequi', llaves:'Llaves', efectivo:'Efectivo'};
 function orderText() {
   const name=$('#fName').value.trim(), addr=$('#fAddr').value.trim(), note=$('#fNote').value.trim();
   const n = cartCount(), domi = st.entrega !== 'recoger';
@@ -1555,7 +1583,7 @@ function orderText() {
   out.push(`*Total del pedido: ${fmt(orderTotal())}*${domi ? ' (sin domicilio)' : ''}`, '');
   out.push(domi ? 'Entrega: Domicilio' : `Entrega: Recojo en el local (${DIRECCION_LOCAL})`);
   if (domi) out.push(`Dirección: ${addr}`);
-  out.push(`Pago: ${PAGOS[st.pago] || ''}`, `Nombre: ${name}`);
+  out.push(st.pago==='llave' ? `Pago: Transferencia por llave ${LLAVE} (envío el comprobante por aquí)` : `Pago: ${PAGOS[st.pago] || ''}`, `Nombre: ${name}`);
   if (note) out.push(`Notas: ${note}`);
   if (!isOpen()) out.push('', `(Lo envío fuera del horario de atención: ${HORARIO.texto})`);
   return out.join('\n');
@@ -1862,18 +1890,40 @@ let allDrinks = false;
 function renderDrinks() {
   const list = allDrinks ? BEBIDAS : BEBIDAS.slice(0,6);
   $('#drow').classList.toggle('all', allDrinks);
-  $('#drow').innerHTML = list.map(([id,n,p]) => { const q = st.drinks[id] || 0;
+  const step = (key, q) => `<div class="dstep"><button class="${q===1?'rm':''}" data-dm="${key}" aria-label="${q===1?'Quitar bebida':'Una menos'}">${I(q===1?'trash':'minus')}</button><span>${q}</span><button data-d="${key}" aria-label="Una más">${I('plus')}</button></div>`;
+  $('#drow').innerHTML = list.map(([id,n,p,sab]) => {
+    if (sab) {   // una tarjeta por cada sabor elegido y una para agregar otro sabor
+      const elegidos = sab.filter(f => st.drinks[id+'|'+f]);
+      return elegidos.map(f => `<div class="dchip on"><div class="dadd"><span>${f}</span><b>${n} · ${fmt(p)}</b></div>${step(id+'|'+f, st.drinks[id+'|'+f])}</div>`).join('')
+        + `<div class="dchip"><button class="dadd" data-pick="${id}"><span>${n}</span><b>${fmt(p)}</b><span class="add">${I('plus')}${elegidos.length ? 'Otro sabor' : 'Elegir sabor'}</span></button></div>`;
+    }
+    const q = st.drinks[id] || 0;
     if (!q) return `<div class="dchip"><button class="dadd" data-d="${id}"><span>${n}</span><b>${fmt(p)}</b><span class="add">${I('plus')}Agregar</span></button></div>`;
-    return `<div class="dchip on"><div class="dadd"><span>${n}</span><b>${fmt(p)} c/u</b></div>
-      <div class="dstep"><button class="${q===1?'rm':''}" data-dm="${id}" aria-label="${q===1?'Quitar bebida':'Una menos'}">${I(q===1?'trash':'minus')}</button><span>${q}</span><button data-d="${id}" aria-label="Una más">${I('plus')}</button></div></div>`; }).join('');
+    return `<div class="dchip on"><div class="dadd"><span>${n}</span><b>${fmt(p)} c/u</b></div>${step(id, q)}</div>`; }).join('');
   $('#moreDrinks').textContent = allDrinks ? 'Ver menos' : 'Ver todas';
 }
-$('#drow').addEventListener('click', e => {
-  const a = e.target.closest('[data-d]'), m = e.target.closest('[data-dm]');
-  if (a) { const id = a.dataset.d; st.drinks[id] = Math.min(20, (st.drinks[id]||0) + 1); tone(880,{dur:.1,g:.05}); track('bebida_agregada', {bebida: BEB[id].name, precio: BEB[id].price}); }
-  else if (m) { const id = m.dataset.dm; st.drinks[id] = Math.max(0, (st.drinks[id]||0) - 1); if (!st.drinks[id]) delete st.drinks[id]; tone(587,{dur:.1,g:.05}); }
-  else return;
+function addDrink(key) {
+  const b = bebOf(key); if (!b) return;
+  st.drinks[key] = Math.min(20, (st.drinks[key]||0) + 1); tone(880,{dur:.1,g:.05});
+  track('bebida_agregada', {bebida: b.name, precio: b.price});
   renderOrder(); refresh();
+}
+let fAt = 0, fId = null;
+function openFlavors(id) {
+  fId = id; fAt = Date.now(); const b = BEB[id];
+  $('#fName2').textContent = `${b.name} · ${fmt(b.price)}`;
+  $('#fopts').innerHTML = b.sabores.map(f => `<button class="opt" data-f="${f}">${f}</button>`).join('');
+  $('#fsheet').classList.add('show'); $('#fback').classList.add('show');
+}
+function closeFlavors() { $('#fsheet').classList.remove('show'); $('#fback').classList.remove('show'); }
+$('#fback').onclick = () => { if (Date.now() - fAt > 450) closeFlavors(); };
+$('#fClose').onclick = closeFlavors;
+$('#fopts').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; closeFlavors(); addDrink(fId + '|' + b.dataset.f); });
+$('#drow').addEventListener('click', e => {
+  const pk = e.target.closest('[data-pick]'), a = e.target.closest('[data-d]'), m = e.target.closest('[data-dm]');
+  if (pk) { openFlavors(pk.dataset.pick); return; }
+  if (a) { addDrink(a.dataset.d); return; }
+  if (m) { const k = m.dataset.dm; st.drinks[k] = Math.max(0, (st.drinks[k]||0) - 1); if (!st.drinks[k]) delete st.drinks[k]; tone(587,{dur:.1,g:.05}); renderOrder(); refresh(); }
 });
 $('#moreDrinks').onclick = () => { allDrinks = !allDrinks; renderDrinks(); };
 
@@ -1881,6 +1931,7 @@ $('#moreDrinks').onclick = () => { allDrinks = !allDrinks; renderDrinks(); };
 function paintSegs() {
   document.querySelectorAll('.segs[data-k] button').forEach(b => b.classList.toggle('on', st[b.parentNode.dataset.k] === b.dataset.v));
   $('#fAddr').style.display = st.entrega === 'recoger' ? 'none' : '';
+  $('#payInfo').innerHTML = st.pago === 'llave' ? payHTML() : '';
   $('#fAddr').placeholder = 'Dirección de entrega (barrio y punto de referencia)';
 }
 document.querySelectorAll('.segs[data-k]').forEach(g => g.addEventListener('click', e => {
@@ -1889,7 +1940,17 @@ document.querySelectorAll('.segs[data-k]').forEach(g => g.addEventListener('clic
   if (!KIOSCO) store.set('italia_' + g.dataset.k, b.dataset.v);
   paintSegs();
 }));
-if (!KIOSCO) { st.entrega = store.get('italia_entrega') || 'domicilio'; st.pago = store.get('italia_pago') || ''; }
+if (!KIOSCO) { st.entrega = store.get('italia_entrega') || 'domicilio'; st.pago = PAGOS[store.get('italia_pago')] ? store.get('italia_pago') : ''; }
+function payHTML() {
+  return `<div class="llave"><div><small>Transfiere a la llave</small><b>${LLAVE}</b></div><button class="copy" data-copy="${LLAVE}">${I('copy')}Copiar</button></div>
+    <p>Envía el comprobante por el mismo chat de WhatsApp.${st.entrega==='recoger' ? ' En el local también puedes pagar con el código QR.' : ''}</p>`;
+}
+document.addEventListener('click', async e => {
+  const c = e.target.closest('[data-copy]'); if (!c) return;
+  try { await navigator.clipboard.writeText(c.dataset.copy); }
+  catch(x) { const ta = document.createElement('textarea'); ta.value = c.dataset.copy; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch(y) {} ta.remove(); }
+  toast('Llave copiada'); track('llave_copiada');
+});
 paintSegs();
 
 /* ================= Horario de atención ================= */
@@ -1927,7 +1988,7 @@ function restoreOrder() {
     if (Date.now() - o.at > 12*3600e3 || sent > o.at) { localStorage.removeItem('italia_pedido'); return; }
     st.cart = o.cart.filter(it => it && it.tops && Object.keys(it.tops).every(id => TOPS[id]))
       .map(it => ({tops: it.tops, qty: Math.max(1, Math.min(20, +it.qty || 1)), house: CASA[it.house] ? it.house : null}));
-    st.drinks = Object.fromEntries(Object.entries(o.drinks || {}).filter(([id,q]) => BEB[id] && q > 0));
+    st.drinks = Object.fromEntries(Object.entries(o.drinks || {}).filter(([k,q]) => bebOf(k) && q > 0));
     if (st.cart.length) setTimeout(()=>toast(`Tu pedido sigue aquí · ${fmt(orderTotal())}`), 900);
   } catch(e) {}
 }
@@ -1939,6 +2000,7 @@ function showSent() {
   const dl = drinksList();
   $('#sentSum').innerHTML = `<b>${plural(cartCount())}${dl.length ? ' + ' + dl.reduce((a,d)=>a+d.q,0) + ' bebida' + (dl.reduce((a,d)=>a+d.q,0)>1?'s':'') : ''}</b><span>${fmt(orderTotal())}${st.entrega==='recoger' ? ' · Recoges en el local' : ' + domicilio'}</span>`;
   $('#sentP').textContent = st.entrega==='recoger' ? 'Revisa tu WhatsApp: allá te confirmamos a qué hora puedes pasar a recogerlo.' : 'Revisa tu WhatsApp: allá te confirmamos el valor del domicilio y el tiempo de entrega.';
+  $('#sentPay').innerHTML = st.pago === 'llave' ? payHTML() : '';
   $('#toast').classList.remove('show'); $('#sent').classList.add('show'); sfx.success(); track('pantalla_pedido_enviado');
 }
 function hideSent() { $('#sent').classList.remove('show'); }
@@ -2023,7 +2085,7 @@ async function sharePizza(origen) {
 }
 $('#shareCard').onclick = () => sharePizza('pedido');
 $('#shareSent').onclick = () => sharePizza('enviado');
-document.addEventListener('keydown', e => { if (e.key==='Escape') { closeIng(); closeCasa(); } });
+document.addEventListener('keydown', e => { if (e.key==='Escape') { closeIng(); closeCasa(); closeFlavors(); } });
 
 /* ================= Arranque ================= */
 restoreOrder();
