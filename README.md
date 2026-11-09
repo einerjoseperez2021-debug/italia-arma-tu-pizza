@@ -1,3 +1,5 @@
+> **La página se mudó a https://italiasincelejo.github.io/** (repositorio `italiasincelejo/italiasincelejo.github.io`). Este enlace solo redirige a la dirección nueva.
+
 # Arma tu pizza · Italia Sincelejo 🍕
 
 Página web interactiva para que los clientes de **Italia** (comidas rápidas, Plaza Cultural de Majagual, Sincelejo) armen su pizza personal de 27 cm, la vean salir del horno en 3D y envíen el pedido por WhatsApp.
